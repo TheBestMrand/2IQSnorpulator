@@ -1,6 +1,5 @@
 ﻿using Avalonia;
 using System;
-using Data.Database;
 
 namespace Desktop;
 
@@ -12,8 +11,6 @@ sealed class Program
     [STAThread]
     public static void Main(string[] args)
     {
-        var db = new DbService();
-        
         BuildAvaloniaApp().StartWithClassicDesktopLifetime(args);
     }
 
