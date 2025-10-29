@@ -6,6 +6,8 @@
         <BuiltInComInteropSupport>true</BuiltInComInteropSupport>
         <ApplicationManifest>app.manifest</ApplicationManifest>
         <AvaloniaUseCompiledBindingsByDefault>true</AvaloniaUseCompiledBindingsByDefault>
+        <TieredCompilation>true</TieredCompilation>
+        <TieredCompilationQuickJit>true</TieredCompilationQuickJit>
     </PropertyGroup>
 
     <ItemGroup>
@@ -15,6 +17,8 @@
 
     <ItemGroup>
         <PackageReference Include="Avalonia" Version="11.3.6"/>
+        <PackageReference Include="Avalonia.AvaloniaEdit" Version="11.3.0" />
+        <PackageReference Include="Avalonia.Controls.DataGrid" Version="11.3.6" />
         <PackageReference Include="Avalonia.Desktop" Version="11.3.6"/>
         <PackageReference Include="Avalonia.Themes.Fluent" Version="11.3.6"/>
         <PackageReference Include="Avalonia.Fonts.Inter" Version="11.3.6"/>
@@ -24,5 +28,10 @@
             <PrivateAssets Condition="'$(Configuration)' != 'Debug'">All</PrivateAssets>
         </PackageReference>
         <PackageReference Include="CommunityToolkit.Mvvm" Version="8.2.1"/>
+    </ItemGroup>
+
+    <ItemGroup>
+      <ProjectReference Include="..\Core\Core.csproj" />
+      <ProjectReference Include="..\Data\Data.csproj" />
     </ItemGroup>
 </Project>
