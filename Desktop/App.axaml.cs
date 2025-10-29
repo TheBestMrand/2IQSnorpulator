@@ -1,16 +1,21 @@
+using System;
 using Avalonia;
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Data.Core;
 using Avalonia.Data.Core.Plugins;
 using System.Linq;
 using Avalonia.Markup.Xaml;
+using Core.Services;
 using Desktop.ViewModels;
 using Desktop.Views;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace Desktop;
 
 public partial class App : Application
 {
+    public static IServiceProvider? Services { get; private set; }
+    
     public override void Initialize()
     {
         AvaloniaXamlLoader.Load(this);
@@ -18,18 +23,29 @@ public partial class App : Application
 
     public override void OnFrameworkInitializationCompleted()
     {
+        // Setup Dependency Injection
+        var services = new ServiceCollection();
+        ConfigureServices(services);
+        Services = services.BuildServiceProvider();
+
         if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
         {
-            // Avoid duplicate validations from both Avalonia and the CommunityToolkit. 
-            // More info: https://docs.avaloniaui.net/docs/guides/development-guides/data-validation#manage-validationplugins
             DisableAvaloniaDataAnnotationValidation();
+            
+            // Create MainWindow with DI
+            var mainViewModel = Services.GetRequiredService<MainWindowViewModel>();
             desktop.MainWindow = new MainWindow
             {
-                DataContext = new MainWindowViewModel(),
+                DataContext = mainViewModel
             };
         }
 
         base.OnFrameworkInitializationCompleted();
+    }
+    
+    private void ConfigureServices(ServiceCollection services)
+    {
+        services.AddSingleton<GreatRequestExecutor>();
     }
 
     private void DisableAvaloniaDataAnnotationValidation()
