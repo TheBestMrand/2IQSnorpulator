@@ -6,6 +6,8 @@ using Avalonia.Data.Core.Plugins;
 using System.Linq;
 using Avalonia.Markup.Xaml;
 using Core.Services;
+using Data.Database;
+using Data.Repositories;
 using Desktop.ViewModels;
 using Desktop.Views;
 using Microsoft.Extensions.DependencyInjection;
@@ -45,6 +47,10 @@ public partial class App : Application
     
     private void ConfigureServices(ServiceCollection services)
     {
+        services.AddSingleton<DbService>();
+        services.AddSingleton<RequestDbRepository>();
+        services.AddSingleton<HistoryDbRepository>();
+        services.AddSingleton<CollectionDbRepository>();
         services.AddSingleton<GreatRequestExecutor>();
     }
 

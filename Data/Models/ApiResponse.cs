@@ -3,7 +3,6 @@
 public class ApiResponse
 {
     public int StatusCode { get; set; }
-    public bool IsSuccessStatusCode => StatusCode is >= 200 and < 300;
     
     public string? Body { get; set; }
     public string? BodyType { get; set; }
