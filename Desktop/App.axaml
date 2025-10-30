@@ -13,10 +13,12 @@
         <converters:TabVisibilityConverter x:Key="TabVisibilityConverter"/>
         <converters:SendButtonTextConverter x:Key="SendButtonTextConverter"/>
         <converters:BodyTypeVisibilityConverter x:Key="BodyTypeVisibilityConverter"/>
-        <converters:LoadFullResponseTextConverter x:Key="LoadFullResponseTextConverter"/>
     </Application.Resources>
 
     <Application.Styles>
         <FluentTheme />
+        
+        <!-- AvaloniaEdit styles (REQUIRED for TextEditor to work!) -->
+        <StyleInclude Source="avares://AvaloniaEdit/Themes/Fluent/AvaloniaEdit.xaml" />
     </Application.Styles>
 </Application>

@@ -8,6 +8,8 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Core.Services;
 using Data.Models;
+using AvaloniaEdit.Document;
+using AvaloniaEdit.Highlighting;
 
 namespace Desktop.ViewModels;
 
@@ -45,11 +47,15 @@ public partial class RequestTabViewModel : ViewModelBase
     [ObservableProperty]
     private ObservableCollection<QueryParamViewModel> _queryParams = new();
 
+    // Use TextDocument for body editor with syntax highlighting
     [ObservableProperty]
-    private string _body = "";
+    private TextDocument _bodyDocument = new();
 
     [ObservableProperty]
     private string _bodyType = "JSON";
+    
+    [ObservableProperty]
+    private IHighlightingDefinition? _bodySyntaxHighlighting;
 
     [ObservableProperty]
     private string _preRequestScript = "";
@@ -69,17 +75,12 @@ public partial class RequestTabViewModel : ViewModelBase
     [ObservableProperty]
     private string _authPassword = "";
 
+    // Use TextDocument for efficient large text handling - no truncation needed!
     [ObservableProperty]
-    private string _responseBody = "";
-
+    private TextDocument _responseDocument = new();
+    
     [ObservableProperty]
-    private string _fullResponseBody = "";
-
-    [ObservableProperty]
-    private bool _isResponseTruncated = false;
-
-    [ObservableProperty]
-    private int _responseBodyLength = 0;
+    private IHighlightingDefinition? _responseSyntaxHighlighting;
 
     [ObservableProperty]
     private ObservableCollection<KeyValuePair<string, string>> _responseHeaders = new();
@@ -190,45 +191,16 @@ public partial class RequestTabViewModel : ViewModelBase
         OnPropertyChanged(nameof(MethodTextColor));
     }
 
-    [ObservableProperty]
-    private bool _isLoadingFullResponse = false;
-
-    [RelayCommand]
-    private async Task LoadFullResponse()
-    {
-        if (string.IsNullOrEmpty(_fullResponseBody) || IsLoadingFullResponse)
-            return;
-
-        IsLoadingFullResponse = true;
-        
-        try
-        {
-            // Load on background thread to avoid UI freeze
-            await Task.Run(() =>
-            {
-                // Simulate work to give UI time to update
-                System.Threading.Thread.Sleep(100);
-            });
-
-            await Avalonia.Threading.Dispatcher.UIThread.InvokeAsync(() =>
-            {
-                ResponseBody = _fullResponseBody;
-                IsResponseTruncated = false;
-            });
-        }
-        finally
-        {
-            IsLoadingFullResponse = false;
-        }
-    }
-
     [RelayCommand]
     private async Task Send()
     {
         if (string.IsNullOrWhiteSpace(Url))
         {
             ResponseStatus = "Error";
-            ResponseBody = "Please enter a valid URL";
+            await Avalonia.Threading.Dispatcher.UIThread.InvokeAsync(() =>
+            {
+                ResponseDocument.Text = "Please enter a valid URL";
+            });
             return;
         }
 
@@ -237,7 +209,7 @@ public partial class RequestTabViewModel : ViewModelBase
         // Capture values to avoid cross-thread access
         var methodToUse = ActualMethod;
         var urlToUse = Url;
-        var bodyToUse = (BodyType == "None" || string.IsNullOrWhiteSpace(Body)) ? null : Body;
+        var bodyToUse = (BodyType == "None" || string.IsNullOrWhiteSpace(BodyDocument.Text)) ? null : BodyDocument.Text;
         var bodyTypeToUse = GetContentType();
         var headersToUse = Headers
             .Where(h => !string.IsNullOrWhiteSpace(h.Key))
@@ -250,7 +222,7 @@ public partial class RequestTabViewModel : ViewModelBase
 
         try
         {
-            // Auto-update Content-Type header - do this before starting async work
+            // Auto-update Content-Type header
             await Avalonia.Threading.Dispatcher.UIThread.InvokeAsync(() =>
             {
                 UpdateContentTypeHeader();
@@ -275,48 +247,33 @@ public partial class RequestTabViewModel : ViewModelBase
 
                 var resp = await _executor.ExecuteRequestAsync(request).ConfigureAwait(false);
                 
-                // Format and truncate on background thread
-                string formatted;
-                string fullBody;
-                bool truncated = false;
+                // Format on background thread
+                string formattedBody;
                 
                 if (resp.BodyType?.Contains("json") == true && !string.IsNullOrWhiteSpace(resp.Body))
                 {
                     try
                     {
                         var jsonDoc = JsonDocument.Parse(resp.Body);
-                        fullBody = JsonSerializer.Serialize(jsonDoc, new JsonSerializerOptions { WriteIndented = true });
+                        formattedBody = JsonSerializer.Serialize(jsonDoc, new JsonSerializerOptions { WriteIndented = true });
                     }
                     catch
                     {
-                        fullBody = resp.Body ?? "";
+                        formattedBody = resp.Body ?? "";
                     }
                 }
                 else
                 {
-                    fullBody = resp.Body ?? "";
+                    formattedBody = resp.Body ?? "";
                 }
 
-                // Truncate if response is large (> 10KB for initial display)
-                const int maxDisplaySize = 10000; // 10KB characters for smooth performance
-                if (fullBody.Length > maxDisplaySize)
-                {
-                    formatted = fullBody.Substring(0, maxDisplaySize) + 
-                        "\n\n... (Response truncated for performance. Click 'Load Full Response' to see all content)";
-                    truncated = true;
-                }
-                else
-                {
-                    formatted = fullBody;
-                }
-
-                return (resp, formatted, fullBody, truncated, fullBody.Length);
+                return (resp, formattedBody);
             }).ConfigureAwait(false);
 
             // Update UI on UI thread
             await Avalonia.Threading.Dispatcher.UIThread.InvokeAsync(() =>
             {
-                var (response, formattedBody, fullBody, truncated, bodyLength) = result;
+                var (response, formattedBody) = result;
                 
                 ResponseStatus = response.StatusCode == 0 
                     ? "Error" 
@@ -341,10 +298,11 @@ public partial class RequestTabViewModel : ViewModelBase
                     ResponseCookies = "No cookies";
                 }
                 
-                ResponseBody = formattedBody;
-                _fullResponseBody = fullBody;
-                IsResponseTruncated = truncated;
-                ResponseBodyLength = bodyLength;
+                // Just set the full response - TextEditor handles large text efficiently!
+                ResponseDocument.Text = formattedBody;
+                
+                // Don't use syntax highlighting for response - keep it plain for better readability
+                ResponseSyntaxHighlighting = null;
                 
                 OnPropertyChanged(nameof(ResponseStatusColor));
                 OnPropertyChanged(nameof(ResponseStatusTextColor));
@@ -355,13 +313,11 @@ public partial class RequestTabViewModel : ViewModelBase
             await Avalonia.Threading.Dispatcher.UIThread.InvokeAsync(() =>
             {
                 ResponseStatus = "Error";
-                ResponseBody = $"Error: {ex.Message}";
+                ResponseDocument.Text = $"Error: {ex.Message}";
                 ResponseTime = 0;
                 ResponseSize = "";
                 ResponseHeaders.Clear();
                 ResponseCookies = "No cookies";
-                IsResponseTruncated = false;
-                ResponseBodyLength = 0;
                 
                 OnPropertyChanged(nameof(ResponseStatusColor));
                 OnPropertyChanged(nameof(ResponseStatusTextColor));
@@ -377,13 +333,11 @@ public partial class RequestTabViewModel : ViewModelBase
     {
         var contentType = GetContentType();
         
-        // Find existing Content-Type header
         var existingHeader = Headers.FirstOrDefault(h => 
             h.Key.Equals("Content-Type", StringComparison.OrdinalIgnoreCase));
         
         if (BodyType == "None" || string.IsNullOrWhiteSpace(contentType))
         {
-            // Remove Content-Type if body type is None
             if (existingHeader != null)
             {
                 Headers.Remove(existingHeader);
@@ -393,12 +347,10 @@ public partial class RequestTabViewModel : ViewModelBase
         
         if (existingHeader != null)
         {
-            // Update existing header
             existingHeader.Value = contentType;
         }
         else
         {
-            // Find first empty header slot
             var emptyHeader = Headers.FirstOrDefault(h => string.IsNullOrWhiteSpace(h.Key));
             if (emptyHeader != null)
             {
@@ -407,7 +359,6 @@ public partial class RequestTabViewModel : ViewModelBase
             }
             else
             {
-                // Add new header at the beginning
                 Headers.Insert(0, new HeaderViewModel
                 {
                     Key = "Content-Type",
@@ -483,11 +434,21 @@ public partial class RequestTabViewModel : ViewModelBase
     partial void OnBodyTypeChanged(string value)
     {
         UpdateContentTypeHeader();
+        UpdateBodySyntaxHighlighting();
+    }
+    
+    private void UpdateBodySyntaxHighlighting()
+    {
+        BodySyntaxHighlighting = BodyType switch
+        {
+            "JSON" => HighlightingManager.Instance.GetDefinition("JavaScript"), // JSON uses JS highlighting
+            "XML" => HighlightingManager.Instance.GetDefinition("XML"),
+            _ => null
+        };
     }
 
     private void InitializeMockData()
     {
-        // Only Content-Type header by default
         Headers.Add(new HeaderViewModel
         {
             Key = "Content-Type",
@@ -499,14 +460,12 @@ public partial class RequestTabViewModel : ViewModelBase
             Value = ""
         });
 
-        // Mock query params
         QueryParams.Add(new QueryParamViewModel
         {
             Key = "",
             Value = ""
         });
 
-        // Mock pre-request script
         PreRequestScript = @"// Generate dynamic authentication token
 var apiKey = GetEnvironmentVariable(""API_KEY"");
 var timestamp = DateTime.UtcNow.ToString(""yyyy-MM-ddTHH:mm:ssZ"");
@@ -515,7 +474,9 @@ var signature = GenerateHMAC(apiKey, timestamp);
 SetHeader(""X-Timestamp"", timestamp);
 SetHeader(""X-Signature"", signature);";
 
-        // Mock initial URL
         Url = "https://api.github.com/users/octocat";
+        
+        // Initialize syntax highlighting for JSON
+        UpdateBodySyntaxHighlighting();
     }
 }
