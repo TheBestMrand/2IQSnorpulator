@@ -85,6 +85,8 @@ public class GreatRequestExecutor
             );
         }
         
+        message.Headers.TryAddWithoutValidation("User-Agent", "SnorpulatorAgent");
+        
         foreach (var header in request.Headers)
         {
             if (!message.Headers.TryAddWithoutValidation(header.Key, header.Value))
