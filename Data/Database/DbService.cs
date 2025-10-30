@@ -36,7 +36,7 @@ public class DbService : IDisposable
     {
         GetCollection<Request>(DbConsts.TableNameRequests).EnsureIndex(x => x.CollectionId);
         GetCollection<HistoryEntry>(DbConsts.TableNameHistoryEntries).EnsureIndex(x => x.ExecutedAt);
-        GetCollection<HistoryEntry>(DbConsts.TableNameHistoryEntries).EnsureIndex(x => x.Name, true);
+        GetCollection<HistoryEntry>(DbConsts.TableNameHistoryEntries).EnsureIndex(x => x.Name);
         GetCollection<Collection>(DbConsts.TableNameCollections).EnsureIndex(x => x.Name, true);
         GetCollection<Environment>(DbConsts.TableNameEnvironments).EnsureIndex(x => x.Name, true);
         GetCollection<Session>(DbConsts.TableSessionEntries).EnsureIndex(x => x.Name, true);
