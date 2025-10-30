@@ -2,6 +2,7 @@
 using System.Text;
 using System.Web;
 using Data.Models;
+using Data.Models.Dto;
 using Data.Repositories;
 
 namespace Core.Services;

@@ -1,6 +1,8 @@
-﻿namespace Data.Models;
+﻿using Data.Models.Dto;
 
-public class HistoryEntry : Request
+namespace Data.Models;
+
+public class HistoryEntry : CollectionLite
 {
     public Request Request { get; set; } = new();
     public ApiResponse Response { get; set; } = new();

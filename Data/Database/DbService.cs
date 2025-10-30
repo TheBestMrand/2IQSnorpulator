@@ -13,6 +13,7 @@ public class DbService : IDisposable
     public ILiteCollection<Request> Requests => _db.GetCollection<Request>(DbConsts.TableNameRequests);
     public ILiteCollection<Environment> Environments => _db.GetCollection<Environment>(DbConsts.TableNameEnvironments);
     public ILiteCollection<HistoryEntry> History => _db.GetCollection<HistoryEntry>(DbConsts.TableNameHistoryEntries);
+    public ILiteCollection<Session> Session => _db.GetCollection<Session>(DbConsts.TableSessionEntries);
     
     private string GetDbPath()
     {
@@ -38,6 +39,7 @@ public class DbService : IDisposable
         GetCollection<HistoryEntry>(DbConsts.TableNameHistoryEntries).EnsureIndex(x => x.Name, true);
         GetCollection<Collection>(DbConsts.TableNameCollections).EnsureIndex(x => x.Name, true);
         GetCollection<Environment>(DbConsts.TableNameEnvironments).EnsureIndex(x => x.Name, true);
+        GetCollection<Session>(DbConsts.TableSessionEntries).EnsureIndex(x => x.Name, true);
     }
 
     public void Dispose()
