@@ -2,12 +2,19 @@
 using System.Text;
 using System.Web;
 using Data.Models;
+using Data.Repositories;
 
 namespace Core.Services;
 
 public class GreatRequestExecutor
 {
     private readonly HttpClient _httpClient = new(); // TODO: IHttpClientFactory
+    private readonly HistoryDbRepository _historyDbRepository;
+
+    public GreatRequestExecutor(HistoryDbRepository historyDbRepository)
+    {
+        _historyDbRepository = historyDbRepository;
+    }
 
     public async Task<ApiResponse> ExecuteRequestAsync(Request request)
     {
@@ -37,8 +44,15 @@ public class GreatRequestExecutor
         {
             startTime.Stop();
         }
+
+        var response = await CreateApiResponse(startTime.Elapsed, httpResponse!, responseBody);
+        _ = Task.Run(() => _historyDbRepository.Insert(new HistoryEntry
+        {
+            Request = request,
+            Response = response,
+        }));
         
-        return await CreateApiResponse(startTime.Elapsed, httpResponse!, responseBody);
+        return response;
     }
     
     private string BuildUrlWithQuery(string baseUrl, Dictionary<string, string> queryParams)

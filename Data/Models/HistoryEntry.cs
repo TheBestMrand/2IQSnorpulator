@@ -2,11 +2,8 @@
 
 public class HistoryEntry : Request
 {
-    public DateTime ExecutedAt { get; set; }
+    public Request Request { get; set; } = new();
+    public ApiResponse Response { get; set; } = new();
     
-    public int StatusCode { get; set; }
-    public string ResponseBody { get; set; }
-    public long ResponseTimeMs { get; set; }
-    
-    public int? RequestId { get; set; }
+    public DateTime ExecutedAt { get; } = DateTime.UtcNow;
 }

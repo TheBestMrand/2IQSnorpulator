@@ -4,7 +4,7 @@ namespace Data.Models;
 
 public class Request
 {
-    public int Id { get; set; }
+    public int Id { get; init; }
     public string Name { get; set; } = string.Empty;
     
     public int CollectionId { get; set; }
