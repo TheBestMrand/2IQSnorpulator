@@ -1,4 +1,6 @@
-﻿namespace Data.Models;
+﻿using Data.Models.Dto;
+
+namespace Data.Models;
 
 public class HistoryEntry : CollectionLite
 {

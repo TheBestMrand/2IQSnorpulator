@@ -53,6 +53,7 @@ public partial class App : Application
         services.AddSingleton<CollectionDbRepository>();
         services.AddSingleton<SessionDbRepository>();
         services.AddSingleton<GreatRequestExecutor>();
+        services.AddSingleton<ScriptRunnerService>();
     }
 
     private void DisableAvaloniaDataAnnotationValidation()
