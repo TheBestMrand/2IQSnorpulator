@@ -7,4 +7,5 @@ public struct DbConsts
     public const string TableNameCollections = "collections";
     public const string TableNameEnvironments = "environments";
     public const string TableNameHistoryEntries = "history";
+    public const string TableSessionEntries = "session";
 }

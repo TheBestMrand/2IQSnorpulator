@@ -51,6 +51,7 @@ public partial class App : Application
         services.AddSingleton<RequestDbRepository>();
         services.AddSingleton<HistoryDbRepository>();
         services.AddSingleton<CollectionDbRepository>();
+        services.AddSingleton<SessionDbRepository>();
         services.AddSingleton<GreatRequestExecutor>();
     }
 

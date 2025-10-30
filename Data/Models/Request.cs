@@ -2,11 +2,8 @@
 
 namespace Data.Models;
 
-public class Request
+public class Request : CollectionLite
 {
-    public int Id { get; init; }
-    public string Name { get; set; } = string.Empty;
-    
     public int CollectionId { get; set; }
     
     public string Method { get; set; } = string.Empty;
