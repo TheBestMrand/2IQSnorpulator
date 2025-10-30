@@ -3,18 +3,668 @@
         xmlns:vm="using:Desktop.ViewModels"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+        mc:Ignorable="d" d:DesignWidth="1400" d:DesignHeight="900"
         x:Class="Desktop.Views.MainWindow"
         x:DataType="vm:MainWindowViewModel"
-        Icon="/Assets/avalonia-logo.ico"
-        Title="Desktop">
+        Title="2IQSnorpulator"
+        Width="1400" Height="900"
+        Background="#0a0a0a">
 
-    <Design.DataContext>
-        <!-- This only sets the DataContext for the previewer in an IDE,
-             to set the actual DataContext for runtime, set the DataContext property in code (look at App.axaml.cs) -->
-        <vm:MainWindowViewModel/>
-    </Design.DataContext>
+    <Window.Styles>
+        <Style Selector="Button.header-btn">
+            <Setter Property="Padding" Value="8,8"/>
+            <Setter Property="Background" Value="#141414"/>
+            <Setter Property="BorderBrush" Value="#2a2a2a"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="CornerRadius" Value="6"/>
+            <Setter Property="Foreground" Value="#e0e0e0"/>
+            <Setter Property="FontSize" Value="13"/>
+        </Style>
+        <Style Selector="Button.header-btn:pointerover">
+            <Setter Property="Background" Value="#1f1f1f"/>
+        </Style>
+        <Style Selector="Button.primary-btn">
+            <Setter Property="Background" Value="#ffffff"/>
+            <Setter Property="Foreground" Value="#000000"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+        </Style>
+        <Style Selector="Button.primary-btn:pointerover">
+            <Setter Property="Background" Value="#e8e8e8"/>
+        </Style>
+        <Style Selector="TextBox.dark-input">
+            <Setter Property="Background" Value="#141414"/>
+            <Setter Property="BorderBrush" Value="#2a2a2a"/>
+            <Setter Property="Foreground" Value="#e0e0e0"/>
+            <Setter Property="Padding" Value="10,8"/>
+            <Setter Property="CornerRadius" Value="6"/>
+        </Style>
+        <Style Selector="ComboBox.dark-combo">
+            <Setter Property="Background" Value="#141414"/>
+            <Setter Property="BorderBrush" Value="#2a2a2a"/>
+            <Setter Property="Foreground" Value="#e0e0e0"/>
+        </Style>
+    </Window.Styles>
 
-    <TextBlock Text="{Binding Greeting}" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
 
+        <!-- Header -->
+        <Border Grid.Row="0" Background="#000000" BorderBrush="#1a1a1a" BorderThickness="0,0,0,1" Padding="20,12">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+
+                <!-- Logo -->
+                <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="10">
+                    <Border Width="32" Height="32" CornerRadius="6" Background="White">
+                        <TextBlock Text="2IQ" FontSize="16" FontWeight="Bold" 
+                                   Foreground="Black" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                    </Border>
+                    <TextBlock Text="2IQSnorpulator" FontSize="18" FontWeight="SemiBold" 
+                               Foreground="White" VerticalAlignment="Center"/>
+                </StackPanel>
+
+                <!-- Header Actions -->
+                <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="12">
+                    <Button Content="Import" Classes="header-btn"/>
+                    <Button Content="Export" Classes="header-btn"/>
+                    <Button Content="Settings" Classes="header-btn"/>
+                    <Button Content="+ New Request" Classes="header-btn primary-btn" 
+                            Command="{Binding AddNewTabCommand}"/>
+                </StackPanel>
+            </Grid>
+        </Border>
+
+        <!-- Main Container -->
+        <Grid Grid.Row="1">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="280"/>
+                <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
+
+            <!-- Sidebar -->
+            <Border Grid.Column="0" Background="#0f0f0f" BorderBrush="#1a1a1a" BorderThickness="0,0,1,0">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
+
+                    <!-- Sidebar Tabs -->
+                    <Border Grid.Row="0" Background="#000000" BorderBrush="#1a1a1a" BorderThickness="0,0,0,1">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+
+                            <Button Grid.Column="0"
+                                    Background="{Binding SelectedSidebarTab, Converter={StaticResource TabBackgroundConverter}, ConverterParameter=Collections}"
+                                    BorderThickness="0,0,0,2"
+                                    BorderBrush="{Binding SelectedSidebarTab, Converter={StaticResource TabBorderConverter}, ConverterParameter=Collections}"
+                                    Padding="12"
+                                    Command="{Binding SelectSidebarTabCommand}" CommandParameter="Collections">
+                                <TextBlock Text="Collections" 
+                                           FontSize="13"
+                                           Foreground="{Binding SelectedSidebarTab, Converter={StaticResource TabForegroundConverter}, ConverterParameter=Collections}"/>
+                            </Button>
+                            
+                            <Button Grid.Column="1"
+                                    Background="{Binding SelectedSidebarTab, Converter={StaticResource TabBackgroundConverter}, ConverterParameter=History}"
+                                    BorderThickness="0,0,0,2"
+                                    BorderBrush="{Binding SelectedSidebarTab, Converter={StaticResource TabBorderConverter}, ConverterParameter=History}"
+                                    Padding="12"
+                                    Command="{Binding SelectSidebarTabCommand}" CommandParameter="History">
+                                <TextBlock Text="History" 
+                                           FontSize="13"
+                                           Foreground="{Binding SelectedSidebarTab, Converter={StaticResource TabForegroundConverter}, ConverterParameter=History}"/>
+                            </Button>
+                        </Grid>
+                    </Border>
+
+                    <!-- Sidebar Content -->
+                    <ScrollViewer Grid.Row="1" Padding="16">
+                        <Grid>
+                            <!-- Collections Content -->
+                            <StackPanel Spacing="8" IsVisible="{Binding IsCollectionsTabSelected}">
+                                <TextBlock Text="MY COLLECTIONS" FontSize="12" Foreground="#666" 
+                                           FontWeight="SemiBold" Margin="0,0,0,12"/>
+                                
+                                <ItemsControl ItemsSource="{Binding Collections}">
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate>
+                                            <Border Background="#141414" BorderBrush="#1a1a1a" BorderThickness="1" 
+                                                    CornerRadius="6" Padding="12,10" Margin="0,0,0,8">
+                                                <StackPanel>
+                                                    <TextBlock Text="{Binding Name}" FontSize="14" 
+                                                               FontWeight="SemiBold" Foreground="White"/>
+                                                    <TextBlock Text="{Binding RequestCount, StringFormat='{}{0} requests'}" 
+                                                               FontSize="12" Foreground="#666" Margin="0,4,0,0"/>
+                                                </StackPanel>
+                                            </Border>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+                            </StackPanel>
+
+                            <!-- History Content -->
+                            <StackPanel Spacing="8" IsVisible="{Binding !IsCollectionsTabSelected}">
+                                <TextBlock Text="RECENT REQUESTS" FontSize="12" Foreground="#666" 
+                                           FontWeight="SemiBold" Margin="0,0,0,12"/>
+                                
+                                <ItemsControl ItemsSource="{Binding History}">
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate>
+                                            <Border Background="#141414" BorderBrush="#1a1a1a" BorderThickness="1" 
+                                                    CornerRadius="6" Padding="12,10" Margin="0,0,0,8">
+                                                <StackPanel>
+                                                    <StackPanel Orientation="Horizontal" Spacing="8">
+                                                        <Border Background="{Binding MethodColor}" 
+                                                                Padding="4,2" CornerRadius="4">
+                                                            <TextBlock Text="{Binding Method}" FontSize="11" 
+                                                                       Foreground="{Binding MethodTextColor}" FontWeight="SemiBold"/>
+                                                        </Border>
+                                                        <TextBlock Text="{Binding Name}" FontSize="13" 
+                                                                   Foreground="White" VerticalAlignment="Center"/>
+                                                    </StackPanel>
+                                                    <TextBlock Text="{Binding Url}" FontSize="12" 
+                                                               Foreground="#888" Margin="0,4,0,0" 
+                                                               TextTrimming="CharacterEllipsis"/>
+                                                </StackPanel>
+                                            </Border>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+                            </StackPanel>
+                        </Grid>
+                    </ScrollViewer>
+                </Grid>
+            </Border>
+
+            <!-- Content Area -->
+            <Grid Grid.Column="1">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="*"/>
+                </Grid.RowDefinitions>
+
+                <!-- Tabs Bar -->
+                <Border Grid.Row="0" Background="#000000" BorderBrush="#1a1a1a" BorderThickness="0,0,0,1">
+                    <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Disabled">
+                        <StackPanel Orientation="Horizontal">
+                            <ItemsControl ItemsSource="{Binding Tabs}">
+                                <ItemsControl.ItemsPanel>
+                                    <ItemsPanelTemplate>
+                                        <StackPanel Orientation="Horizontal"/>
+                                    </ItemsPanelTemplate>
+                                </ItemsControl.ItemsPanel>
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                <Border Background="{Binding IsActive, Converter={StaticResource ActiveTabBackgroundConverter}}"
+                                                BorderBrush="#1a1a1a" BorderThickness="0,0,1,0" 
+                                                Padding="20,12" MinWidth="180"
+                                                PointerPressed="TabBorder_PointerPressed">
+                                            <Grid>
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="Auto"/>
+                                                    <ColumnDefinition Width="*"/>
+                                                    <ColumnDefinition Width="Auto"/>
+                                                </Grid.ColumnDefinitions>
+
+                                                <Border Grid.Column="0" Background="{Binding MethodColor}" 
+                                                        Padding="4,2" CornerRadius="4" Margin="0,0,8,0">
+                                                    <TextBlock Text="{Binding Method}" FontSize="11" 
+                                                               Foreground="{Binding MethodTextColor}" FontWeight="SemiBold"/>
+                                                </Border>
+
+                                                <TextBlock Grid.Column="1" Text="{Binding Name}" 
+                                                           Foreground="{Binding IsActive, Converter={StaticResource ActiveTabForegroundConverter}}"
+                                                           VerticalAlignment="Center" TextTrimming="CharacterEllipsis"/>
+
+                                                <Button Grid.Column="2"
+                                                        Background="Transparent" BorderThickness="0"
+                                                        Padding="6,2"
+                                                        Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).CloseTabCommand}"
+                                                        CommandParameter="{Binding}">
+                                                    <TextBlock Text="×" FontSize="18" Foreground="#888"/>
+                                                </Button>
+                                            </Grid>
+                                        </Border>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+
+                            <!-- New Tab Button -->
+                            <Button Background="Transparent" BorderThickness="0"
+                                    Padding="16,12"
+                                    Command="{Binding AddNewTabCommand}">
+                                <TextBlock Text="+" FontSize="18" Foreground="#666"/>
+                            </Button>
+                        </StackPanel>
+                    </ScrollViewer>
+                </Border>
+
+                <!-- Request Builder -->
+                <ScrollViewer Grid.Row="1" Padding="20">
+                    <StackPanel Spacing="20" DataContext="{Binding ActiveTab}">
+                        <!-- URL Bar -->
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+
+                            <Grid Grid.Column="0" Margin="0,0,12,0">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+                                
+                                <ComboBox Grid.Column="0" SelectedItem="{Binding Method}" 
+                                          Classes="dark-combo" MinWidth="100"
+                                          Padding="10,8" CornerRadius="6"
+                                          IsVisible="{Binding !IsCustomMethod}">
+                                    <ComboBox.Items>
+                                        <x:String>GET</x:String>
+                                        <x:String>POST</x:String>
+                                        <x:String>PUT</x:String>
+                                        <x:String>DELETE</x:String>
+                                        <x:String>PATCH</x:String>
+                                        <x:String>HEAD</x:String>
+                                        <x:String>OPTIONS</x:String>
+                                        <x:String>Custom...</x:String>
+                                    </ComboBox.Items>
+                                </ComboBox>
+
+                                <TextBox Grid.Column="0" Text="{Binding CustomMethod}" 
+                                         Classes="dark-input" MinWidth="100"
+                                         Watermark="METHOD"
+                                         IsVisible="{Binding IsCustomMethod}"/>
+
+                                <Button Grid.Column="1" Content="↺" 
+                                        Background="#141414" BorderBrush="#2a2a2a" BorderThickness="1"
+                                        CornerRadius="6" Padding="8" Margin="4,0,0,0"
+                                        Command="{Binding ResetToStandardMethodCommand}"
+                                        IsVisible="{Binding IsCustomMethod}"
+                                        ToolTip.Tip="Back to standard methods"/>
+                            </Grid>
+
+                            <TextBox Grid.Column="1" Text="{Binding Url}" 
+                                     Classes="dark-input" Watermark="https://api.example.com/endpoint"
+                                     Margin="0,0,12,0"/>
+
+                            <Button Grid.Column="2" Classes="header-btn primary-btn"
+                                    Padding="32,10" Command="{Binding SendCommand}"
+                                    IsEnabled="{Binding !IsSending}">
+                                <TextBlock Text="{Binding IsSending, Converter={StaticResource SendButtonTextConverter}}"/>
+                            </Button>
+                        </Grid>
+
+                        <!-- Options Tabs -->
+                        <Border BorderBrush="#1a1a1a" BorderThickness="0,0,0,1">
+                            <StackPanel Orientation="Horizontal" Spacing="2">
+                                <Button Background="Transparent" BorderThickness="0,0,0,2"
+                                        BorderBrush="{Binding SelectedOptionTab, Converter={StaticResource TabBorderConverter}, ConverterParameter=Headers}"
+                                        Padding="20,10"
+                                        Command="{Binding SelectOptionTabCommand}" CommandParameter="Headers">
+                                    <TextBlock Text="Headers" FontSize="13"
+                                               Foreground="{Binding SelectedOptionTab, Converter={StaticResource TabForegroundConverter}, ConverterParameter=Headers}"/>
+                                </Button>
+                                <Button Background="Transparent" BorderThickness="0,0,0,2"
+                                        BorderBrush="{Binding SelectedOptionTab, Converter={StaticResource TabBorderConverter}, ConverterParameter=Body}"
+                                        Padding="20,10"
+                                        Command="{Binding SelectOptionTabCommand}" CommandParameter="Body">
+                                    <TextBlock Text="Body" FontSize="13"
+                                               Foreground="{Binding SelectedOptionTab, Converter={StaticResource TabForegroundConverter}, ConverterParameter=Body}"/>
+                                </Button>
+                                <Button Background="Transparent" BorderThickness="0,0,0,2"
+                                        BorderBrush="{Binding SelectedOptionTab, Converter={StaticResource TabBorderConverter}, ConverterParameter=Auth}"
+                                        Padding="20,10"
+                                        Command="{Binding SelectOptionTabCommand}" CommandParameter="Auth">
+                                    <TextBlock Text="Auth" FontSize="13"
+                                               Foreground="{Binding SelectedOptionTab, Converter={StaticResource TabForegroundConverter}, ConverterParameter=Auth}"/>
+                                </Button>
+                                <Button Background="Transparent" BorderThickness="0,0,0,2"
+                                        BorderBrush="{Binding SelectedOptionTab, Converter={StaticResource TabBorderConverter}, ConverterParameter=QueryParams}"
+                                        Padding="20,10"
+                                        Command="{Binding SelectOptionTabCommand}" CommandParameter="QueryParams">
+                                    <TextBlock Text="Query Params" FontSize="13"
+                                               Foreground="{Binding SelectedOptionTab, Converter={StaticResource TabForegroundConverter}, ConverterParameter=QueryParams}"/>
+                                </Button>
+                                <Button Background="Transparent" BorderThickness="0,0,0,2"
+                                        BorderBrush="{Binding SelectedOptionTab, Converter={StaticResource TabBorderConverter}, ConverterParameter=PreScript}"
+                                        Padding="20,10"
+                                        Command="{Binding SelectOptionTabCommand}" CommandParameter="PreScript">
+                                    <TextBlock Text="Pre-Request Script" FontSize="13"
+                                               Foreground="{Binding SelectedOptionTab, Converter={StaticResource TabForegroundConverter}, ConverterParameter=PreScript}"/>
+                                </Button>
+                                <Button Background="Transparent" BorderThickness="0,0,0,2"
+                                        BorderBrush="{Binding SelectedOptionTab, Converter={StaticResource TabBorderConverter}, ConverterParameter=Tests}"
+                                        Padding="20,10"
+                                        Command="{Binding SelectOptionTabCommand}" CommandParameter="Tests">
+                                    <TextBlock Text="Tests" FontSize="13"
+                                               Foreground="{Binding SelectedOptionTab, Converter={StaticResource TabForegroundConverter}, ConverterParameter=Tests}"/>
+                                </Button>
+                            </StackPanel>
+                        </Border>
+
+                        <!-- Headers Editor -->
+                        <Border Background="#0f0f0f" BorderBrush="#1a1a1a" BorderThickness="1" 
+                                CornerRadius="6" Padding="16" MinHeight="200"
+                                IsVisible="{Binding SelectedOptionTab, Converter={StaticResource TabVisibilityConverter}, ConverterParameter=Headers}">
+                            <StackPanel Spacing="12">
+                                <ItemsControl ItemsSource="{Binding Headers}">
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate>
+                                            <Grid Margin="0,0,0,12">
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="*"/>
+                                                    <ColumnDefinition Width="*"/>
+                                                    <ColumnDefinition Width="Auto"/>
+                                                </Grid.ColumnDefinitions>
+
+                                                <TextBox Grid.Column="0" Text="{Binding Key}" 
+                                                         Classes="dark-input" Watermark="Key" Margin="0,0,6,0"/>
+                                                <TextBox Grid.Column="1" Text="{Binding Value}" 
+                                                         Classes="dark-input" Watermark="Value" Margin="6,0,6,0"/>
+                                                <Button Grid.Column="2" Background="#1a1a1a" 
+                                                        BorderBrush="#2a2a2a" BorderThickness="1" CornerRadius="4"
+                                                        Padding="12,8"
+                                                        Command="{Binding $parent[Border].((vm:RequestTabViewModel)DataContext).RemoveHeaderCommand}"
+                                                        CommandParameter="{Binding}">
+                                                    <TextBlock Text="×" Foreground="#888"/>
+                                                </Button>
+                                            </Grid>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+
+                                <Button Content="+ Add Header" Background="#141414" 
+                                        BorderBrush="#2a2a2a" BorderThickness="1" CornerRadius="4"
+                                        Foreground="#888" Padding="8,8" HorizontalAlignment="Left"
+                                        Command="{Binding AddHeaderCommand}"/>
+                            </StackPanel>
+                        </Border>
+
+                        <!-- Body Editor -->
+                        <Border Background="#0f0f0f" BorderBrush="#1a1a1a" BorderThickness="1" 
+                                CornerRadius="6" Padding="16" MinHeight="200"
+                                IsVisible="{Binding SelectedOptionTab, Converter={StaticResource TabVisibilityConverter}, ConverterParameter=Body}">
+                            <StackPanel Spacing="12">
+                                <ComboBox SelectedItem="{Binding BodyType}" Classes="dark-combo" 
+                                          Padding="8,6" CornerRadius="4" HorizontalAlignment="Left" MinWidth="150">
+                                    <x:String>None</x:String>
+                                    <x:String>JSON</x:String>
+                                    <x:String>XML</x:String>
+                                    <x:String>Form Data</x:String>
+                                    <x:String>Raw</x:String>
+                                </ComboBox>
+
+                                <TextBox Text="{Binding Body}" Classes="dark-input" 
+                                         AcceptsReturn="True" TextWrapping="Wrap" MinHeight="150"
+                                         Watermark="Enter request body..."
+                                         FontFamily="Courier New" FontSize="13" Foreground="#4ade80"
+                                         IsVisible="{Binding BodyType, Converter={StaticResource BodyTypeVisibilityConverter}}"/>
+                            </StackPanel>
+                        </Border>
+
+                        <!-- Auth -->
+                        <Border Background="#0f0f0f" BorderBrush="#1a1a1a" BorderThickness="1" 
+                                CornerRadius="6" Padding="16" MinHeight="200"
+                                IsVisible="{Binding SelectedOptionTab, Converter={StaticResource TabVisibilityConverter}, ConverterParameter=Auth}">
+                            <StackPanel Spacing="12">
+                                <ComboBox SelectedItem="{Binding AuthType}" Classes="dark-combo" 
+                                          Padding="8,6" CornerRadius="4" HorizontalAlignment="Left" MinWidth="180">
+                                    <x:String>No Auth</x:String>
+                                    <x:String>Bearer Token</x:String>
+                                    <x:String>Basic Auth</x:String>
+                                    <x:String>API Key</x:String>
+                                </ComboBox>
+
+                                <!-- Bearer Token -->
+                                <StackPanel Spacing="8" IsVisible="{Binding AuthType, Converter={StaticResource TabVisibilityConverter}, ConverterParameter=Bearer Token}">
+                                    <TextBlock Text="Token" FontSize="13" Foreground="#888"/>
+                                    <TextBox Text="{Binding AuthToken}" Classes="dark-input" 
+                                             Watermark="Enter bearer token..."/>
+                                </StackPanel>
+
+                                <!-- Basic Auth -->
+                                <StackPanel Spacing="8" IsVisible="{Binding AuthType, Converter={StaticResource TabVisibilityConverter}, ConverterParameter=Basic Auth}">
+                                    <TextBlock Text="Username" FontSize="13" Foreground="#888"/>
+                                    <TextBox Text="{Binding AuthUsername}" Classes="dark-input" 
+                                             Watermark="Enter username..."/>
+                                    <TextBlock Text="Password" FontSize="13" Foreground="#888" Margin="0,8,0,0"/>
+                                    <TextBox Text="{Binding AuthPassword}" Classes="dark-input" 
+                                             Watermark="Enter password..." PasswordChar="●"/>
+                                </StackPanel>
+
+                                <!-- API Key -->
+                                <StackPanel Spacing="8" IsVisible="{Binding AuthType, Converter={StaticResource TabVisibilityConverter}, ConverterParameter=API Key}">
+                                    <TextBlock Text="API Key" FontSize="13" Foreground="#888"/>
+                                    <TextBox Text="{Binding AuthToken}" Classes="dark-input" 
+                                             Watermark="Enter API key..."/>
+                                </StackPanel>
+                            </StackPanel>
+                        </Border>
+
+                        <!-- Query Params -->
+                        <Border Background="#0f0f0f" BorderBrush="#1a1a1a" BorderThickness="1" 
+                                CornerRadius="6" Padding="16" MinHeight="200"
+                                IsVisible="{Binding SelectedOptionTab, Converter={StaticResource TabVisibilityConverter}, ConverterParameter=QueryParams}">
+                            <StackPanel Spacing="12">
+                                <ItemsControl ItemsSource="{Binding QueryParams}">
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate>
+                                            <Grid Margin="0,0,0,12">
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="*"/>
+                                                    <ColumnDefinition Width="*"/>
+                                                    <ColumnDefinition Width="Auto"/>
+                                                </Grid.ColumnDefinitions>
+
+                                                <TextBox Grid.Column="0" Text="{Binding Key}" 
+                                                         Classes="dark-input" Watermark="Key" Margin="0,0,6,0"/>
+                                                <TextBox Grid.Column="1" Text="{Binding Value}" 
+                                                         Classes="dark-input" Watermark="Value" Margin="6,0,6,0"/>
+                                                <Button Grid.Column="2" Background="#1a1a1a" 
+                                                        BorderBrush="#2a2a2a" BorderThickness="1" CornerRadius="4"
+                                                        Padding="12,8"
+                                                        Command="{Binding $parent[Border].((vm:RequestTabViewModel)DataContext).RemoveQueryParamCommand}"
+                                                        CommandParameter="{Binding}">
+                                                    <TextBlock Text="×" Foreground="#888"/>
+                                                </Button>
+                                            </Grid>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+
+                                <Button Content="+ Add Query Parameter" Background="#141414" 
+                                        BorderBrush="#2a2a2a" BorderThickness="1" CornerRadius="4"
+                                        Foreground="#888" Padding="8,8" HorizontalAlignment="Left"
+                                        Command="{Binding AddQueryParamCommand}"/>
+                            </StackPanel>
+                        </Border>
+
+                        <!-- Pre-Request Script -->
+                        <Border Background="#0f0f0f" BorderBrush="#1a1a1a" BorderThickness="1" 
+                                CornerRadius="6" Padding="16" MinHeight="250"
+                                IsVisible="{Binding SelectedOptionTab, Converter={StaticResource TabVisibilityConverter}, ConverterParameter=PreScript}">
+                            <StackPanel Spacing="12">
+                                <Grid>
+                                    <TextBlock Text="Pre-Request Script" FontSize="13" Foreground="#888" 
+                                               HorizontalAlignment="Left" VerticalAlignment="Center"/>
+                                    <ComboBox SelectedItem="{Binding ScriptLanguage}" Classes="dark-combo" 
+                                              Padding="4,4" HorizontalAlignment="Right" MinWidth="100">
+                                        <x:String>C#</x:String>
+                                        <x:String>Python</x:String>
+                                    </ComboBox>
+                                </Grid>
+
+                                <Border Background="#000000" BorderBrush="#1a1a1a" BorderThickness="1" 
+                                        CornerRadius="4" Padding="12">
+                                    <TextBox Text="{Binding PreRequestScript}" 
+                                             AcceptsReturn="True" TextWrapping="Wrap" MinHeight="200"
+                                             Background="Transparent" BorderThickness="0"
+                                             Watermark="// Write your pre-request script here..."
+                                             FontFamily="Courier New" FontSize="13" Foreground="#4ade80"/>
+                                </Border>
+                            </StackPanel>
+                        </Border>
+
+                        <!-- Response Area -->
+                        <Border Background="#0f0f0f" BorderBrush="#1a1a1a" BorderThickness="1" 
+                                CornerRadius="6" Padding="16" MinHeight="300">
+                            <StackPanel Spacing="16">
+                                <!-- Response Header -->
+                                <Grid>
+                                    <StackPanel Orientation="Horizontal" Spacing="20" HorizontalAlignment="Left">
+                                        <Border Background="{Binding ResponseStatusColor}" 
+                                                Padding="8,4" CornerRadius="4">
+                                            <TextBlock Text="{Binding ResponseStatus}" FontSize="12" 
+                                                       FontWeight="SemiBold" Foreground="{Binding ResponseStatusTextColor}"/>
+                                        </Border>
+                                        <TextBlock Text="{Binding ResponseTime, StringFormat='{}{0}ms'}" 
+                                                   FontSize="13" Foreground="#888" VerticalAlignment="Center"/>
+                                        <TextBlock Text="{Binding ResponseSize}" 
+                                                   FontSize="13" Foreground="#888" VerticalAlignment="Center"/>
+                                    </StackPanel>
+
+                                    <StackPanel Orientation="Horizontal" Spacing="16" HorizontalAlignment="Right">
+                                        <Button Background="Transparent" BorderThickness="0,0,0,2"
+                                                BorderBrush="{Binding SelectedResponseTab, Converter={StaticResource TabBorderConverter}, ConverterParameter=Body}"
+                                                Padding="12,6"
+                                                Command="{Binding SelectResponseTabCommand}" CommandParameter="Body">
+                                            <TextBlock Text="Body" FontSize="13"
+                                                       Foreground="{Binding SelectedResponseTab, Converter={StaticResource TabForegroundConverter}, ConverterParameter=Body}"/>
+                                        </Button>
+                                        <Button Background="Transparent" BorderThickness="0,0,0,2"
+                                                BorderBrush="{Binding SelectedResponseTab, Converter={StaticResource TabBorderConverter}, ConverterParameter=RespHeaders}"
+                                                Padding="12,6"
+                                                Command="{Binding SelectResponseTabCommand}" CommandParameter="RespHeaders">
+                                            <TextBlock Text="Headers" FontSize="13"
+                                                       Foreground="{Binding SelectedResponseTab, Converter={StaticResource TabForegroundConverter}, ConverterParameter=RespHeaders}"/>
+                                        </Button>
+                                        <Button Background="Transparent" BorderThickness="0,0,0,2"
+                                                BorderBrush="{Binding SelectedResponseTab, Converter={StaticResource TabBorderConverter}, ConverterParameter=Cookies}"
+                                                Padding="12,6"
+                                                Command="{Binding SelectResponseTabCommand}" CommandParameter="Cookies">
+                                            <TextBlock Text="Cookies" FontSize="13"
+                                                       Foreground="{Binding SelectedResponseTab, Converter={StaticResource TabForegroundConverter}, ConverterParameter=Cookies}"/>
+                                        </Button>
+                                        <Button Background="Transparent" BorderThickness="0,0,0,2"
+                                                BorderBrush="{Binding SelectedResponseTab, Converter={StaticResource TabBorderConverter}, ConverterParameter=RespTests}"
+                                                Padding="12,6"
+                                                Command="{Binding SelectResponseTabCommand}" CommandParameter="RespTests">
+                                            <TextBlock Text="Tests" FontSize="13"
+                                                       Foreground="{Binding SelectedResponseTab, Converter={StaticResource TabForegroundConverter}, ConverterParameter=RespTests}"/>
+                                        </Button>
+                                    </StackPanel>
+                                </Grid>
+
+                                <!-- Response Body -->
+                                <Border Background="#000000" BorderBrush="#1a1a1a" BorderThickness="1" 
+                                        CornerRadius="4" Padding="16" MaxHeight="400"
+                                        IsVisible="{Binding SelectedResponseTab, Converter={StaticResource TabVisibilityConverter}, ConverterParameter=Body}">
+                                    <Grid>
+                                        <Grid.RowDefinitions>
+                                            <RowDefinition Height="Auto"/>
+                                            <RowDefinition Height="*"/>
+                                        </Grid.RowDefinitions>
+
+                                        <!-- Truncation Warning -->
+                                        <Border Grid.Row="0" Background="#4d3a1a" Padding="12,8" CornerRadius="4" 
+                                                Margin="0,0,0,12"
+                                                IsVisible="{Binding IsResponseTruncated}">
+                                            <Grid>
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="*"/>
+                                                    <ColumnDefinition Width="Auto"/>
+                                                </Grid.ColumnDefinitions>
+                                                <TextBlock Grid.Column="0" 
+                                                           Text="{Binding ResponseBodyLength, StringFormat='⚠️ Large response ({0:N0} characters) - Showing first 10,000 chars for performance'}" 
+                                                           FontSize="12" Foreground="#fbbf24" VerticalAlignment="Center"/>
+                                                <Button Grid.Column="1" 
+                                                        Background="#141414" BorderBrush="#2a2a2a" BorderThickness="1"
+                                                        CornerRadius="4" Padding="8,4" FontSize="12"
+                                                        Command="{Binding LoadFullResponseCommand}"
+                                                        IsEnabled="{Binding !IsLoadingFullResponse}">
+                                                    <TextBlock Text="{Binding IsLoadingFullResponse, Converter={StaticResource LoadFullResponseTextConverter}}"/>
+                                                </Button>
+                                            </Grid>
+                                        </Border>
+
+                                        <ScrollViewer Grid.Row="1">
+                                            <TextBox Text="{Binding ResponseBody}" 
+                                                     IsReadOnly="True"
+                                                     Background="Transparent"
+                                                     BorderThickness="0"
+                                                     FontFamily="Courier New" FontSize="13" 
+                                                     Foreground="#60a5fa" TextWrapping="Wrap"
+                                                     AcceptsReturn="True"/>
+                                        </ScrollViewer>
+                                    </Grid>
+                                </Border>
+
+                                <!-- Response Headers -->
+                                <Border Background="#000000" BorderBrush="#1a1a1a" BorderThickness="1" 
+                                        CornerRadius="4" Padding="16" MaxHeight="400"
+                                        IsVisible="{Binding SelectedResponseTab, Converter={StaticResource TabVisibilityConverter}, ConverterParameter=RespHeaders}">
+                                    <ScrollViewer>
+                                        <ItemsControl ItemsSource="{Binding ResponseHeaders}">
+                                            <ItemsControl.ItemTemplate>
+                                                <DataTemplate>
+                                                    <Grid Margin="0,0,0,8">
+                                                        <Grid.ColumnDefinitions>
+                                                            <ColumnDefinition Width="200"/>
+                                                            <ColumnDefinition Width="*"/>
+                                                        </Grid.ColumnDefinitions>
+                                                        <TextBlock Grid.Column="0" Text="{Binding Key}" 
+                                                                   FontFamily="Courier New" FontSize="13" 
+                                                                   Foreground="#4ade80" FontWeight="SemiBold"/>
+                                                        <TextBlock Grid.Column="1" Text="{Binding Value}" 
+                                                                   FontFamily="Courier New" FontSize="13" 
+                                                                   Foreground="#60a5fa" TextWrapping="Wrap" Margin="16,0,0,0"/>
+                                                    </Grid>
+                                                </DataTemplate>
+                                            </ItemsControl.ItemTemplate>
+                                        </ItemsControl>
+                                    </ScrollViewer>
+                                </Border>
+
+                                <!-- Response Cookies -->
+                                <Border Background="#000000" BorderBrush="#1a1a1a" BorderThickness="1" 
+                                        CornerRadius="4" Padding="16" MaxHeight="400"
+                                        IsVisible="{Binding SelectedResponseTab, Converter={StaticResource TabVisibilityConverter}, ConverterParameter=Cookies}">
+                                    <ScrollViewer>
+                                        <TextBlock Text="{Binding ResponseCookies}" 
+                                                   FontFamily="Courier New" FontSize="13" 
+                                                   Foreground="#888" TextWrapping="Wrap"/>
+                                    </ScrollViewer>
+                                </Border>
+
+                                <!-- Response Tests -->
+                                <Border Background="#000000" BorderBrush="#1a1a1a" BorderThickness="1" 
+                                        CornerRadius="4" Padding="16" MaxHeight="400"
+                                        IsVisible="{Binding SelectedResponseTab, Converter={StaticResource TabVisibilityConverter}, ConverterParameter=RespTests}">
+                                    <ScrollViewer>
+                                        <TextBlock Text="Test results will appear here..." 
+                                                   FontFamily="Courier New" FontSize="13" 
+                                                   Foreground="#888" TextWrapping="Wrap"/>
+                                    </ScrollViewer>
+                                </Border>
+                            </StackPanel>
+                        </Border>
+                    </StackPanel>
+                </ScrollViewer>
+            </Grid>
+        </Grid>
+    </Grid>
 </Window>

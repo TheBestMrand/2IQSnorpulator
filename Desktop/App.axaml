@@ -1,9 +1,21 @@
 <Application xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:converters="using:Desktop.Converters"
              x:Class="Desktop.App"
              RequestedThemeVariant="Default">
-             <!-- "Default" ThemeVariant follows system theme variant. "Dark" or "Light" are other available options. -->
-  
+
+    <Application.Resources>
+        <converters:TabBackgroundConverter x:Key="TabBackgroundConverter"/>
+        <converters:TabBorderConverter x:Key="TabBorderConverter"/>
+        <converters:TabForegroundConverter x:Key="TabForegroundConverter"/>
+        <converters:ActiveTabBackgroundConverter x:Key="ActiveTabBackgroundConverter"/>
+        <converters:ActiveTabForegroundConverter x:Key="ActiveTabForegroundConverter"/>
+        <converters:TabVisibilityConverter x:Key="TabVisibilityConverter"/>
+        <converters:SendButtonTextConverter x:Key="SendButtonTextConverter"/>
+        <converters:BodyTypeVisibilityConverter x:Key="BodyTypeVisibilityConverter"/>
+        <converters:LoadFullResponseTextConverter x:Key="LoadFullResponseTextConverter"/>
+    </Application.Resources>
+
     <Application.Styles>
         <FluentTheme />
     </Application.Styles>
