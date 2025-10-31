@@ -3,6 +3,7 @@ using System.Text;
 using System.Web;
 using Data.Models;
 using Data.Models.Dto;
+using Data.Models.Enums;
 using Data.Repositories;
 
 namespace Core.Services;
@@ -11,30 +12,41 @@ public class GreatRequestExecutor
 {
     private readonly HttpClient _httpClient = new(); // TODO: IHttpClientFactory
     private readonly HistoryDbRepository _historyDbRepository;
+    private readonly ScriptRunnerService _scriptRunner;
 
-    public GreatRequestExecutor(HistoryDbRepository historyDbRepository)
+    public GreatRequestExecutor(HistoryDbRepository historyDbRepository, ScriptRunnerService scriptRunner)
     {
         _historyDbRepository = historyDbRepository;
+        _scriptRunner = scriptRunner;
     }
 
     public async Task<ApiResponse> ExecuteRequestAsync(Request request)
     {
+        var context = new ScriptContext { Request = request };
+        
+        if (!string.IsNullOrEmpty(request.PreRequestScript) && request.ScriptLanguage.HasValue)
+        {
+            var preScriptResult = await RunScript(request.PreRequestScript, request.ScriptLanguage.Value, context);
+            if (!preScriptResult.IsSuccess)
+            {
+                return CreateErrorResponse(new Stopwatch(), $"Pre-request script failed: {preScriptResult.ErrorMessage}");
+            }
+            context = preScriptResult.Context;
+        }
+        
         var startTime = Stopwatch.StartNew();
-        HttpResponseMessage? httpResponse = null;
-        string? responseBody = null;
+        HttpResponseMessage? httpResponse;
+        string? responseBody;
         
         try
         {
-            var fullUrl = BuildUrlWithQuery(request.Url, request.Query);
-            
-            var method = new HttpMethod(request.Method.ToUpperInvariant());
+            var fullUrl = BuildUrlWithQuery(context.Request!.Url, context.Request.Query);
+            var method = new HttpMethod(context.Request.Method.ToUpperInvariant());
             var message = new HttpRequestMessage(method, fullUrl);
             
-            ConfigureHeadersAndContent(message, request);
+            ConfigureHeadersAndContent(message, context.Request);
             
             httpResponse = await _httpClient.SendAsync(message);
-
-
             responseBody = await httpResponse.Content.ReadAsStringAsync();
         }
         catch (HttpRequestException ex)
@@ -47,13 +59,30 @@ public class GreatRequestExecutor
         }
 
         var response = await CreateApiResponse(startTime.Elapsed, httpResponse!, responseBody);
+        
+        context.Response = response;
+        if (!string.IsNullOrEmpty(request.PostResponseScript) && request.ScriptLanguage.HasValue)
+        {
+            _ = RunScript(request.PostResponseScript, request.ScriptLanguage.Value, context);
+        }
+        
         _ = Task.Run(() => _historyDbRepository.Insert(new HistoryEntry
         {
-            Request = request,
+            Request = context.Request,
             Response = response,
         }));
         
         return response;
+    }
+    
+    private async Task<ScriptExecutionResult> RunScript(string script, Languages language, ScriptContext context)
+    {
+        return language switch
+        {
+            Languages.Csharp => await _scriptRunner.RunCSharpScriptAsync(script, context),
+            Languages.Python => await Task.Run(() => _scriptRunner.RunPythonScriptAsync(script, context)),
+            _ => ScriptExecutionResult.Failure(context, "Unsupported language")
+        };
     }
     
     private string BuildUrlWithQuery(string baseUrl, Dictionary<string, string> queryParams)
