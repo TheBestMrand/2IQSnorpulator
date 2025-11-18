@@ -10,23 +10,19 @@ public class StandardVariablesProvider
     private static readonly Random _random = new();
     private static readonly string[] _emailDomains = { "example.com", "test.com", "mail.com", "email.com" };
     
+    public static readonly string[] SupportedVariables = 
+    { 
+        "guid", "uuid", "timestamp", "isotimestamp", 
+        "randomint", "randomstring", "randomemail", 
+        "datenow", "timenow" 
+    };
+
     /// <summary>
     /// Checks if a variable name is a standard/built-in variable
     /// </summary>
     public bool IsStandardVariable(string name)
     {
-        return name.ToLowerInvariant() switch
-        {
-            "guid" or "uuid" => true,
-            "timestamp" => true,
-            "isotimestamp" => true,
-            "randomint" => true,
-            "randomstring" => true,
-            "randomemail" => true,
-            "datenow" => true,
-            "timenow" => true,
-            _ => false
-        };
+        return SupportedVariables.Contains(name.ToLowerInvariant());
     }
     
     /// <summary>

@@ -360,11 +360,11 @@
                                                Foreground="{Binding SelectedOptionTab, Converter={StaticResource TabForegroundConverter}, ConverterParameter=PreScript}"/>
                                 </Button>
                                 <Button Background="Transparent" BorderThickness="0,0,0,2"
-                                        BorderBrush="{Binding SelectedOptionTab, Converter={StaticResource TabBorderConverter}, ConverterParameter=Tests}"
+                                        BorderBrush="{Binding SelectedOptionTab, Converter={StaticResource TabBorderConverter}, ConverterParameter=PostScript}"
                                         Padding="20,10"
-                                        Command="{Binding SelectOptionTabCommand}" CommandParameter="Tests">
-                                    <TextBlock Text="Tests" FontSize="13"
-                                               Foreground="{Binding SelectedOptionTab, Converter={StaticResource TabForegroundConverter}, ConverterParameter=Tests}"/>
+                                        Command="{Binding SelectOptionTabCommand}" CommandParameter="PostScript">
+                                    <TextBlock Text="Post-Request Script" FontSize="13"
+                                               Foreground="{Binding SelectedOptionTab, Converter={StaticResource TabForegroundConverter}, ConverterParameter=PostScript}"/>
                                 </Button>
                             </StackPanel>
                         </Border>
@@ -528,26 +528,136 @@
                         <Border Background="#0f0f0f" BorderBrush="#1a1a1a" BorderThickness="1" 
                                 CornerRadius="6" Padding="16" MinHeight="250"
                                 IsVisible="{Binding SelectedOptionTab, Converter={StaticResource TabVisibilityConverter}, ConverterParameter=PreScript}">
-                            <StackPanel Spacing="12">
-                                <Grid>
-                                    <TextBlock Text="Pre-Request Script" FontSize="13" Foreground="#888" 
-                                               HorizontalAlignment="Left" VerticalAlignment="Center"/>
-                                    <ComboBox SelectedItem="{Binding ScriptLanguage}" Classes="dark-combo" 
-                                              Padding="4,4" HorizontalAlignment="Right" MinWidth="100">
-                                        <x:String>C#</x:String>
-                                        <x:String>Python</x:String>
-                                    </ComboBox>
-                                </Grid>
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+                                
+                                <StackPanel Grid.Column="0" Spacing="12">
+                                    <Grid>
+                                        <TextBlock Text="Pre-Request Script" FontSize="13" Foreground="#888" 
+                                                   HorizontalAlignment="Left" VerticalAlignment="Center"/>
+                                        <StackPanel Orientation="Horizontal" Spacing="8" HorizontalAlignment="Right">
+                                            <Button Content="Variables Guide" Classes="header-btn"
+                                                    Command="{Binding ToggleVariablesGuideCommand}"/>
+                                            <ComboBox SelectedItem="{Binding ScriptLanguage}" Classes="dark-combo" 
+                                                      Padding="4,4" MinWidth="100">
+                                                <x:String>C#</x:String>
+                                                <x:String>Python</x:String>
+                                            </ComboBox>
+                                        </StackPanel>
+                                    </Grid>
 
-                                <Border Background="#000000" BorderBrush="#1a1a1a" BorderThickness="1" 
-                                        CornerRadius="4" Padding="12">
-                                    <TextBox Text="{Binding PreRequestScript}" 
-                                             AcceptsReturn="True" TextWrapping="Wrap" MinHeight="200"
-                                             Background="Transparent" BorderThickness="0"
-                                             Watermark="// Write your pre-request script here..."
-                                             FontFamily="Courier New" FontSize="13" Foreground="#4ade80"/>
+                                    <Border Background="#000000" BorderBrush="#1a1a1a" BorderThickness="1" 
+                                            CornerRadius="4" Padding="12" Height="300">
+                                        <avaloniaEdit:TextEditor Document="{Binding ScriptDocument}"
+                                                                 SyntaxHighlighting="{Binding ScriptSyntaxHighlighting}"
+                                                                 Background="Transparent"
+                                                                 FontFamily="Courier New" 
+                                                                 FontSize="13"
+                                                                 ShowLineNumbers="True"
+                                                                 WordWrap="True"
+                                                                 HorizontalScrollBarVisibility="Disabled"
+                                                                 VerticalScrollBarVisibility="Auto"/>
+                                    </Border>
+                                </StackPanel>
+
+                                <!-- Variables Guide Panel -->
+                                <Border Grid.Column="1" Width="200" Margin="12,0,0,0" 
+                                        Background="#141414" BorderBrush="#2a2a2a" BorderThickness="1" CornerRadius="6"
+                                        IsVisible="{Binding IsVariablesGuideOpen}">
+                                    <Grid RowDefinitions="Auto,*">
+                                        <Border Grid.Row="0" BorderBrush="#2a2a2a" BorderThickness="0,0,0,1" Padding="12,8">
+                                            <TextBlock Text="Standard Variables" FontWeight="SemiBold" FontSize="12" Foreground="#e0e0e0"/>
+                                        </Border>
+                                        <ScrollViewer Grid.Row="1" Padding="8">
+                                            <ItemsControl ItemsSource="{Binding StandardVariables}">
+                                                <ItemsControl.ItemTemplate>
+                                                    <DataTemplate>
+                                                        <Border Background="#1a1a1a" CornerRadius="4" Padding="8,6" Margin="0,0,0,4">
+                                                            <Grid ColumnDefinitions="*,Auto">
+                                                                <TextBlock Grid.Column="0" FontFamily="Courier New" FontSize="12" Foreground="#FFD700">
+                                                                    <Run Text="{}{$" /><Run Text="{Binding}" /><Run Text="}" />
+                                                                </TextBlock>
+                                                                <TextBlock Grid.Column="1" Text="or !" FontSize="10" Foreground="#666" Margin="4,0,0,0"/>
+                                                            </Grid>
+                                                        </Border>
+                                                    </DataTemplate>
+                                                </ItemsControl.ItemTemplate>
+                                            </ItemsControl>
+                                        </ScrollViewer>
+                                    </Grid>
                                 </Border>
-                            </StackPanel>
+                            </Grid>
+                        </Border>
+
+                        <!-- Post-Request Script -->
+                        <Border Background="#0f0f0f" BorderBrush="#1a1a1a" BorderThickness="1" 
+                                CornerRadius="6" Padding="16" MinHeight="250"
+                                IsVisible="{Binding SelectedOptionTab, Converter={StaticResource TabVisibilityConverter}, ConverterParameter=PostScript}">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+                                
+                                <StackPanel Grid.Column="0" Spacing="12">
+                                    <Grid>
+                                        <TextBlock Text="Post-Request Script" FontSize="13" Foreground="#888" 
+                                                   HorizontalAlignment="Left" VerticalAlignment="Center"/>
+                                        <StackPanel Orientation="Horizontal" Spacing="8" HorizontalAlignment="Right">
+                                            <Button Content="Variables Guide" Classes="header-btn"
+                                                    Command="{Binding ToggleVariablesGuideCommand}"/>
+                                            <ComboBox SelectedItem="{Binding ScriptLanguage}" Classes="dark-combo" 
+                                                      Padding="4,4" MinWidth="100">
+                                                <x:String>C#</x:String>
+                                                <x:String>Python</x:String>
+                                            </ComboBox>
+                                        </StackPanel>
+                                    </Grid>
+
+                                    <Border Background="#000000" BorderBrush="#1a1a1a" BorderThickness="1" 
+                                            CornerRadius="4" Padding="12" Height="300">
+                                        <avaloniaEdit:TextEditor Document="{Binding PostScriptDocument}"
+                                                                 SyntaxHighlighting="{Binding ScriptSyntaxHighlighting}"
+                                                                 Background="Transparent"
+                                                                 FontFamily="Courier New" 
+                                                                 FontSize="13"
+                                                                 ShowLineNumbers="True"
+                                                                 WordWrap="True"
+                                                                 HorizontalScrollBarVisibility="Disabled"
+                                                                 VerticalScrollBarVisibility="Auto"/>
+                                    </Border>
+                                </StackPanel>
+
+                                <!-- Variables Guide Panel (Same logic) -->
+                                <Border Grid.Column="1" Width="200" Margin="12,0,0,0" 
+                                        Background="#141414" BorderBrush="#2a2a2a" BorderThickness="1" CornerRadius="6"
+                                        IsVisible="{Binding IsVariablesGuideOpen}">
+                                    <Grid RowDefinitions="Auto,*">
+                                        <Border Grid.Row="0" BorderBrush="#2a2a2a" BorderThickness="0,0,0,1" Padding="12,8">
+                                            <TextBlock Text="Standard Variables" FontWeight="SemiBold" FontSize="12" Foreground="#e0e0e0"/>
+                                        </Border>
+                                        <ScrollViewer Grid.Row="1" Padding="8">
+                                            <ItemsControl ItemsSource="{Binding StandardVariables}">
+                                                <ItemsControl.ItemTemplate>
+                                                    <DataTemplate>
+                                                        <Border Background="#1a1a1a" CornerRadius="4" Padding="8,6" Margin="0,0,0,4">
+                                                            <Grid ColumnDefinitions="*,Auto">
+                                                                <TextBlock Grid.Column="0" FontFamily="Courier New" FontSize="12" Foreground="#FFD700">
+                                                                    <Run Text="{}{$" /><Run Text="{Binding}" /><Run Text="}" />
+                                                                </TextBlock>
+                                                                <TextBlock Grid.Column="1" Text="or !" FontSize="10" Foreground="#666" Margin="4,0,0,0"/>
+                                                            </Grid>
+                                                        </Border>
+                                                    </DataTemplate>
+                                                </ItemsControl.ItemTemplate>
+                                            </ItemsControl>
+                                        </ScrollViewer>
+                                    </Grid>
+                                </Border>
+                            </Grid>
                         </Border>
 
                         <!-- Response Area -->

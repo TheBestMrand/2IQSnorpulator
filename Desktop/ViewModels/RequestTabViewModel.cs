@@ -64,14 +64,23 @@ public partial class RequestTabViewModel : ViewModelBase
     [ObservableProperty]
     private bool _hasJsonError = false;
 
+    // Use TextDocument for script editors
     [ObservableProperty]
-    private string _preRequestScript = "";
+    private TextDocument _scriptDocument = new();
 
     [ObservableProperty]
-    private string _postRequestScript = "";
+    private TextDocument _postScriptDocument = new();
+
+    [ObservableProperty]
+    private IHighlightingDefinition? _scriptSyntaxHighlighting;
 
     [ObservableProperty]
     private string _scriptLanguage = "C#";
+
+    [ObservableProperty]
+    private bool _isVariablesGuideOpen;
+
+    public List<string> StandardVariables => StandardVariablesProvider.SupportedVariables.ToList();
 
     [ObservableProperty]
     private string _authType = "No Auth";
@@ -194,6 +203,12 @@ public partial class RequestTabViewModel : ViewModelBase
     }
 
     [RelayCommand]
+    private void ToggleVariablesGuide()
+    {
+        IsVariablesGuideOpen = !IsVariablesGuideOpen;
+    }
+
+    [RelayCommand]
     private void ResetToStandardMethod()
     {
         IsCustomMethod = false;
@@ -230,8 +245,8 @@ public partial class RequestTabViewModel : ViewModelBase
         var queryToUse = QueryParams
             .Where(q => !string.IsNullOrWhiteSpace(q.Key))
             .ToDictionary(q => q.Key, q => q.Value);
-        var scriptToUse = PreRequestScript;
-        var postScriptToUse = PostRequestScript;
+        var scriptToUse = ScriptDocument.Text;
+        var postScriptToUse = PostScriptDocument.Text;
         var scriptLangToUse = ScriptLanguage;
 
         try
@@ -319,11 +334,11 @@ public partial class RequestTabViewModel : ViewModelBase
                 // Set syntax highlighting with BRIGHT, readable colors
                 if (response.BodyType?.Contains("json") == true)
                 {
-                    ResponseSyntaxHighlighting = JsonHighlightingHelper.GetJsonHighlighting();
+                    ResponseSyntaxHighlighting = SyntaxHighlightingHelper.GetJsonHighlighting();
                 }
                 else if (response.BodyType?.Contains("xml") == true)
                 {
-                    ResponseSyntaxHighlighting = JsonHighlightingHelper.GetXmlHighlighting();
+                    ResponseSyntaxHighlighting = SyntaxHighlightingHelper.GetXmlHighlighting();
                 }
                 else
                 {
@@ -468,8 +483,8 @@ public partial class RequestTabViewModel : ViewModelBase
     {
         BodySyntaxHighlighting = BodyType switch
         {
-            "JSON" => JsonHighlightingHelper.GetJsonHighlighting(),
-            "XML" => JsonHighlightingHelper.GetXmlHighlighting(),
+            "JSON" => SyntaxHighlightingHelper.GetJsonHighlighting(),
+            "XML" => SyntaxHighlightingHelper.GetXmlHighlighting(),
             _ => null
         };
     }
@@ -515,12 +530,28 @@ public partial class RequestTabViewModel : ViewModelBase
             Value = ""
         });
 
-        PreRequestScript = "";  // Empty by default
-        PostRequestScript = "";  // Empty by default
+        ScriptDocument.Text = "";  // Empty by default
+        PostScriptDocument.Text = "";  // Empty by default
 
         Url = "https://api.github.com/users/octocat";
         
-        // Initialize syntax highlighting for JSON
+        // Initialize syntax highlighting for JSON and Scripts
         UpdateBodySyntaxHighlighting();
+        UpdateScriptSyntaxHighlighting();
+    }
+
+    partial void OnScriptLanguageChanged(string value)
+    {
+        UpdateScriptSyntaxHighlighting();
+    }
+
+    private void UpdateScriptSyntaxHighlighting()
+    {
+        ScriptSyntaxHighlighting = ScriptLanguage switch
+        {
+            "C#" => SyntaxHighlightingHelper.GetCSharpHighlighting(),
+            "Python" => SyntaxHighlightingHelper.GetPythonHighlighting(),
+            _ => null
+        };
     }
 }

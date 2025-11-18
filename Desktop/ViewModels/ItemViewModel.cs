@@ -1,4 +1,7 @@
-﻿using CommunityToolkit.Mvvm.ComponentModel;
+﻿using AvaloniaEdit.Document;
+using AvaloniaEdit.Highlighting;
+using Desktop.Helpers;
+using CommunityToolkit.Mvvm.ComponentModel;
 
 namespace Desktop.ViewModels;
 
@@ -56,6 +59,31 @@ public partial class HeaderViewModel : ViewModelBase
 
     [ObservableProperty]
     private string _value = "";
+    
+    [ObservableProperty]
+    private TextDocument _valueDocument = new();
+
+    [ObservableProperty]
+    private IHighlightingDefinition _valueHighlighting = SyntaxHighlightingHelper.GetVariableOnlyHighlighting();
+
+    partial void OnValueChanged(string value)
+    {
+        if (ValueDocument.Text != value)
+        {
+            ValueDocument.Text = value;
+        }
+    }
+    
+    public HeaderViewModel()
+    {
+        ValueDocument.TextChanged += (s, e) =>
+        {
+            if (Value != ValueDocument.Text)
+            {
+                Value = ValueDocument.Text;
+            }
+        };
+    }
 }
 
 public partial class QueryParamViewModel : ViewModelBase
@@ -65,4 +93,29 @@ public partial class QueryParamViewModel : ViewModelBase
 
     [ObservableProperty]
     private string _value = "";
+    
+    [ObservableProperty]
+    private TextDocument _valueDocument = new();
+    
+    [ObservableProperty]
+    private IHighlightingDefinition _valueHighlighting = SyntaxHighlightingHelper.GetVariableOnlyHighlighting();
+
+    partial void OnValueChanged(string value)
+    {
+        if (ValueDocument.Text != value)
+        {
+            ValueDocument.Text = value;
+        }
+    }
+    
+    public QueryParamViewModel()
+    {
+        ValueDocument.TextChanged += (s, e) =>
+        {
+            if (Value != ValueDocument.Text)
+            {
+                Value = ValueDocument.Text;
+            }
+        };
+    }
 }
