@@ -3,6 +3,8 @@
 public class ScriptContext
 {
     public Dictionary<string, string> Environment { get; set; } = new();
+    public Dictionary<string, string> Variables { get; set; } = new(); // Script-accessible variables
+    public Dictionary<string, string> ResolvedVariables { get; set; } = new(); // Cache for generated values
     public ApiResponse? Response { get; set; }
     public Request? Request { get; set; }
     

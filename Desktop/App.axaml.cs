@@ -53,9 +53,11 @@ public partial class App : Application
         services.AddSingleton<CollectionDbRepository>();
         services.AddSingleton<SessionDbRepository>();
         services.AddSingleton<EnvironmentDbRepository>();
+        services.AddSingleton<ScriptRunnerService>();
+        services.AddSingleton<StandardVariablesProvider>();
+        services.AddSingleton<VariableResolver>();
         services.AddSingleton<GreatRequestExecutor>();
         services.AddSingleton<MainWindowViewModel>();
-        services.AddSingleton<ScriptRunnerService>();
     }
 
     private void DisableAvaloniaDataAnnotationValidation()

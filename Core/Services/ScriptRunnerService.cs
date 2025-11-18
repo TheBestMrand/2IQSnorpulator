@@ -23,8 +23,24 @@ public class ScriptRunnerService
         {
             var globals = new ScriptGlobals { pm = context };
             var scriptOptions = ScriptOptions.Default
-                .WithImports("System", "System.Collections.Generic", "System.Linq", "Data.Models")
-                .WithReferences(typeof(ApiResponse).Assembly);
+                .WithImports(
+                    "System",
+                    "System.Collections.Generic",
+                    "System.Linq",
+                    "System.Text",
+                    "System.Security.Cryptography",
+                    "System.Net.Http",
+                    "System.IO",
+                    "System.Threading.Tasks",
+                    "Data.Models",
+                    "Data.Models.Dto"
+                )
+                .WithReferences(
+                    typeof(ApiResponse).Assembly,  // Data.Models
+                    typeof(System.Security.Cryptography.HMACSHA256).Assembly,  // System.Security.Cryptography
+                    typeof(System.Text.Encoding).Assembly,  // System.Text
+                    typeof(System.Net.Http.HttpClient).Assembly  // System.Net.Http
+                );
             
             ScriptState<object> endState = await CSharpScript.RunAsync(script, options: scriptOptions, globals: globals);
             

@@ -68,6 +68,9 @@ public partial class RequestTabViewModel : ViewModelBase
     private string _preRequestScript = "";
 
     [ObservableProperty]
+    private string _postRequestScript = "";
+
+    [ObservableProperty]
     private string _scriptLanguage = "C#";
 
     [ObservableProperty]
@@ -228,6 +231,7 @@ public partial class RequestTabViewModel : ViewModelBase
             .Where(q => !string.IsNullOrWhiteSpace(q.Key))
             .ToDictionary(q => q.Key, q => q.Value);
         var scriptToUse = PreRequestScript;
+        var postScriptToUse = PostRequestScript;
         var scriptLangToUse = ScriptLanguage;
 
         try
@@ -250,6 +254,7 @@ public partial class RequestTabViewModel : ViewModelBase
                     Headers = headersToUse,
                     Query = queryToUse,
                     PreRequestScript = scriptToUse,
+                    PostResponseScript = postScriptToUse,
                     ScriptLanguage = scriptLangToUse == "C#" 
                         ? Data.Models.Enums.Languages.Csharp 
                         : Data.Models.Enums.Languages.Python
@@ -510,13 +515,8 @@ public partial class RequestTabViewModel : ViewModelBase
             Value = ""
         });
 
-        PreRequestScript = @"// Generate dynamic authentication token
-var apiKey = GetEnvironmentVariable(""API_KEY"");
-var timestamp = DateTime.UtcNow.ToString(""yyyy-MM-ddTHH:mm:ssZ"");
-var signature = GenerateHMAC(apiKey, timestamp);
-
-SetHeader(""X-Timestamp"", timestamp);
-SetHeader(""X-Signature"", signature);";
+        PreRequestScript = "";  // Empty by default
+        PostRequestScript = "";  // Empty by default
 
         Url = "https://api.github.com/users/octocat";
         

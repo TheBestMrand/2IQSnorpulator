@@ -13,17 +13,23 @@ public class GreatRequestExecutor
     private readonly HttpClient _httpClient = new(); // TODO: IHttpClientFactory
     private readonly HistoryDbRepository _historyDbRepository;
     private readonly ScriptRunnerService _scriptRunner;
+    private readonly VariableResolver _variableResolver;
 
-    public GreatRequestExecutor(HistoryDbRepository historyDbRepository, ScriptRunnerService scriptRunner)
+    public GreatRequestExecutor(HistoryDbRepository historyDbRepository, ScriptRunnerService scriptRunner, VariableResolver variableResolver)
     {
         _historyDbRepository = historyDbRepository;
         _scriptRunner = scriptRunner;
+        _variableResolver = variableResolver;
     }
 
     public async Task<ApiResponse> ExecuteRequestAsync(Request request)
     {
         var context = new ScriptContext { Request = request };
         
+        // Phase 1: Resolve {!var} immediate variables BEFORE pre-request script
+        ResolveImmediateVariables(context);
+        
+        // Phase 2: Run pre-request script (sees {$var} as literal, {!var} as resolved)
         if (!string.IsNullOrEmpty(request.PreRequestScript) && request.ScriptLanguage.HasValue)
         {
             var preScriptResult = await RunScript(request.PreRequestScript, request.ScriptLanguage.Value, context);
@@ -33,6 +39,9 @@ public class GreatRequestExecutor
             }
             context = preScriptResult.Context;
         }
+        
+        // Phase 3: Resolve {$var} deferred variables AFTER pre-request script
+        ResolveDeferredVariables(context);
         
         var startTime = Stopwatch.StartNew();
         HttpResponseMessage? httpResponse;
@@ -158,5 +167,31 @@ public class GreatRequestExecutor
             BodyType = "text/plain",
             ResponseTime = stopwatch.Elapsed
         };
+    }
+    
+    /// <summary>
+    /// Resolves immediate variables {!var} in request URL, headers, body, and query params
+    /// </summary>
+    private void ResolveImmediateVariables(ScriptContext context)
+    {
+        if (context.Request == null) return;
+        
+        context.Request.Url = _variableResolver.ResolveImmediateVariables(context.Request.Url, context);
+        context.Request.Body = _variableResolver.ResolveImmediateVariables(context.Request.Body, context);
+        context.Request.Headers = _variableResolver.ResolveImmediateVariables(context.Request.Headers, context);
+        context.Request.Query = _variableResolver.ResolveImmediateVariables(context.Request.Query, context);
+    }
+    
+    /// <summary>
+    /// Resolves deferred variables {$var} in request URL, headers, body, and query params
+    /// </summary>
+    private void ResolveDeferredVariables(ScriptContext context)
+    {
+        if (context.Request == null) return;
+        
+        context.Request.Url = _variableResolver.ResolveDeferredVariables(context.Request.Url, context);
+        context.Request.Body = _variableResolver.ResolveDeferredVariables(context.Request.Body, context);
+        context.Request.Headers = _variableResolver.ResolveDeferredVariables(context.Request.Headers, context);
+        context.Request.Query = _variableResolver.ResolveDeferredVariables(context.Request.Query, context);
     }
 }
