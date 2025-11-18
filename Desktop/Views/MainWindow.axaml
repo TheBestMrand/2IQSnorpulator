@@ -49,17 +49,11 @@
         <!-- AvaloniaEdit Styles -->
         <Style Selector="avaloniaEdit|TextEditor">
             <Setter Property="Background" Value="Transparent"/>
-            <Setter Property="Foreground" Value="#e0e0e0"/>
             <Setter Property="FontFamily" Value="Courier New"/>
             <Setter Property="FontSize" Value="13"/>
-            <Setter Property="LineNumbersForeground" Value="#666666"/>
-            <Setter Property="ShowLineNumbers" Value="True"/>
-            <Setter Property="WordWrap" Value="False"/>
-        </Style>
-        
-        <!-- Better colors for syntax highlighting in dark theme -->
-        <Style Selector="avaloniaEdit|TextEditor">
             <Setter Property="LineNumbersForeground" Value="#858585"/>
+            <Setter Property="ShowLineNumbers" Value="True"/>
+            <Setter Property="WordWrap" Value="True"/>
         </Style>
     </Window.Styles>
 
@@ -427,6 +421,14 @@
                                     <x:String>Raw</x:String>
                                 </ComboBox>
 
+                                <!-- JSON Error Display -->
+                                <Border Background="#4d1a1a" BorderBrush="#f87171" BorderThickness="1" 
+                                        CornerRadius="4" Padding="12,8"
+                                        IsVisible="{Binding HasJsonError}">
+                                    <TextBlock Text="{Binding JsonError}" FontSize="12" 
+                                               Foreground="#f87171" TextWrapping="Wrap"/>
+                                </Border>
+
                                 <!-- Use AvaloniaEdit for Body with syntax highlighting -->
                                 <Border Background="#000000" BorderBrush="#1a1a1a" BorderThickness="1" 
                                         CornerRadius="4" Padding="12" Height="200"
@@ -435,12 +437,11 @@
                                                              Document="{Binding BodyDocument}"
                                                              SyntaxHighlighting="{Binding BodySyntaxHighlighting}"
                                                              Background="Transparent"
-                                                             Foreground="#d4d4d4"
                                                              FontFamily="Courier New" 
                                                              FontSize="13"
                                                              ShowLineNumbers="True"
-                                                             WordWrap="False"
-                                                             HorizontalScrollBarVisibility="Auto"
+                                                             WordWrap="True"
+                                                             HorizontalScrollBarVisibility="Disabled"
                                                              VerticalScrollBarVisibility="Auto"/>
                                 </Border>
                             </StackPanel>
@@ -551,7 +552,7 @@
 
                         <!-- Response Area -->
                         <Border Background="#0f0f0f" BorderBrush="#1a1a1a" BorderThickness="1" 
-                                CornerRadius="6" Padding="16" Height="400" ClipToBounds="True">
+                                CornerRadius="6" Padding="16" Height="400">
                             <Grid>
                                 <Grid.RowDefinitions>
                                     <RowDefinition Height="Auto"/>
@@ -604,74 +605,76 @@
                                     </StackPanel>
                                 </Grid>
 
-                                <!-- Response Content Area -->
-                                <Grid Grid.Row="1">
-                                    <!-- Response Body - Using AvaloniaEdit -->
-                                    <Border Background="#000000" BorderBrush="#1a1a1a" BorderThickness="1" 
-                                            CornerRadius="4" Padding="12"
-                                            IsVisible="{Binding SelectedResponseTab, Converter={StaticResource TabVisibilityConverter}, ConverterParameter=Body}">
-                                        <avaloniaEdit:TextEditor Name="ResponseEditor"
-                                                                 Document="{Binding ResponseDocument}"
-                                                                 SyntaxHighlighting="{Binding ResponseSyntaxHighlighting}"
-                                                                 IsReadOnly="True"
-                                                                 Background="Transparent"
-                                                                 Foreground="#d4d4d4"
-                                                                 FontFamily="Courier New" 
-                                                                 FontSize="13"
-                                                                 ShowLineNumbers="True"
-                                                                 WordWrap="False"
-                                                                 HorizontalScrollBarVisibility="Auto"
-                                                                 VerticalScrollBarVisibility="Auto"/>
-                                    </Border>
+                                <!-- Response Content Area - Fixed Width Container -->
+                                <Border Grid.Row="1" ClipToBounds="True">
+                                    <Grid>
+                                        <!-- Response Body - Using AvaloniaEdit -->
+                                        <Border Background="#000000" BorderBrush="#1a1a1a" BorderThickness="1" 
+                                                CornerRadius="4" Padding="12"
+                                                IsVisible="{Binding SelectedResponseTab, Converter={StaticResource TabVisibilityConverter}, ConverterParameter=Body}">
+                                            <avaloniaEdit:TextEditor Name="ResponseEditor"
+                                                                     Document="{Binding ResponseDocument}"
+                                                                     SyntaxHighlighting="{Binding ResponseSyntaxHighlighting}"
+                                                                     IsReadOnly="True"
+                                                                     Background="Transparent"
+                                                                     FontFamily="Courier New" 
+                                                                     FontSize="13"
+                                                                     ShowLineNumbers="True"
+                                                                     WordWrap="True"
+                                                                     HorizontalScrollBarVisibility="Disabled"
+                                                                     VerticalScrollBarVisibility="Auto"
+                                                                     ClipToBounds="True"/>
+                                        </Border>
 
-                                    <!-- Response Headers -->
-                                    <Border Background="#000000" BorderBrush="#1a1a1a" BorderThickness="1" 
-                                            CornerRadius="4" Padding="16"
-                                            IsVisible="{Binding SelectedResponseTab, Converter={StaticResource TabVisibilityConverter}, ConverterParameter=RespHeaders}">
-                                        <ScrollViewer>
-                                            <ItemsControl ItemsSource="{Binding ResponseHeaders}">
-                                                <ItemsControl.ItemTemplate>
-                                                    <DataTemplate>
-                                                        <Grid Margin="0,0,0,8">
-                                                            <Grid.ColumnDefinitions>
-                                                                <ColumnDefinition Width="200"/>
-                                                                <ColumnDefinition Width="*"/>
-                                                            </Grid.ColumnDefinitions>
-                                                            <TextBlock Grid.Column="0" Text="{Binding Key}" 
-                                                                       FontFamily="Courier New" FontSize="13" 
-                                                                       Foreground="#4ade80" FontWeight="SemiBold"/>
-                                                            <TextBlock Grid.Column="1" Text="{Binding Value}" 
-                                                                       FontFamily="Courier New" FontSize="13" 
-                                                                       Foreground="#60a5fa" TextWrapping="Wrap" Margin="16,0,0,0"/>
-                                                        </Grid>
-                                                    </DataTemplate>
-                                                </ItemsControl.ItemTemplate>
-                                            </ItemsControl>
-                                        </ScrollViewer>
-                                    </Border>
+                                        <!-- Response Headers -->
+                                        <Border Background="#000000" BorderBrush="#1a1a1a" BorderThickness="1" 
+                                                CornerRadius="4" Padding="16"
+                                                IsVisible="{Binding SelectedResponseTab, Converter={StaticResource TabVisibilityConverter}, ConverterParameter=RespHeaders}">
+                                            <ScrollViewer>
+                                                <ItemsControl ItemsSource="{Binding ResponseHeaders}">
+                                                    <ItemsControl.ItemTemplate>
+                                                        <DataTemplate>
+                                                            <Grid Margin="0,0,0,8">
+                                                                <Grid.ColumnDefinitions>
+                                                                    <ColumnDefinition Width="200"/>
+                                                                    <ColumnDefinition Width="*"/>
+                                                                </Grid.ColumnDefinitions>
+                                                                <TextBlock Grid.Column="0" Text="{Binding Key}" 
+                                                                           FontFamily="Courier New" FontSize="13" 
+                                                                           Foreground="#4ade80" FontWeight="SemiBold"/>
+                                                                <TextBlock Grid.Column="1" Text="{Binding Value}" 
+                                                                           FontFamily="Courier New" FontSize="13" 
+                                                                           Foreground="#60a5fa" TextWrapping="Wrap" Margin="16,0,0,0"/>
+                                                            </Grid>
+                                                        </DataTemplate>
+                                                    </ItemsControl.ItemTemplate>
+                                                </ItemsControl>
+                                            </ScrollViewer>
+                                        </Border>
 
-                                    <!-- Response Cookies -->
-                                    <Border Background="#000000" BorderBrush="#1a1a1a" BorderThickness="1" 
-                                            CornerRadius="4" Padding="16"
-                                            IsVisible="{Binding SelectedResponseTab, Converter={StaticResource TabVisibilityConverter}, ConverterParameter=Cookies}">
-                                        <ScrollViewer>
-                                            <TextBlock Text="{Binding ResponseCookies}" 
-                                                       FontFamily="Courier New" FontSize="13" 
-                                                       Foreground="#888" TextWrapping="Wrap"/>
-                                        </ScrollViewer>
-                                    </Border>
+                                        <!-- Response Cookies -->
+                                        <Border Background="#000000" BorderBrush="#1a1a1a" BorderThickness="1" 
+                                                CornerRadius="4" Padding="16"
+                                                IsVisible="{Binding SelectedResponseTab, Converter={StaticResource TabVisibilityConverter}, ConverterParameter=Cookies}">
+                                            <ScrollViewer>
+                                                <TextBlock Text="{Binding ResponseCookies}" 
+                                                           FontFamily="Courier New" FontSize="13" 
+                                                           Foreground="#888" TextWrapping="Wrap"/>
+                                            </ScrollViewer>
+                                        </Border>
 
-                                    <!-- Response Tests -->
-                                    <Border Background="#000000" BorderBrush="#1a1a1a" BorderThickness="1" 
-                                            CornerRadius="4" Padding="16"
-                                            IsVisible="{Binding SelectedResponseTab, Converter={StaticResource TabVisibilityConverter}, ConverterParameter=RespTests}">
-                                        <ScrollViewer>
-                                            <TextBlock Text="Test results will appear here..." 
-                                                       FontFamily="Courier New" FontSize="13" 
-                                                       Foreground="#888" TextWrapping="Wrap"/>
-                                        </ScrollViewer>
-                                    </Border>
-                                </Grid>
+                                        <!-- Response Tests -->
+                                        <Border Background="#000000" BorderBrush="#1a1a1a" BorderThickness="1" 
+                                                CornerRadius="4" Padding="16"
+                                                IsVisible="{Binding SelectedResponseTab, Converter={StaticResource TabVisibilityConverter}, ConverterParameter=RespTests}">
+                                            <ScrollViewer>
+                                                <TextBlock Text="Test results will appear here..." 
+                                                           FontFamily="Courier New" FontSize="13" 
+                                                           Foreground="#888" TextWrapping="Wrap"/>
+                                            </ScrollViewer>
+                                        </Border>
+                                    </Grid>
+                                </Border>
                             </Grid>
                         </Border>
                     </StackPanel>

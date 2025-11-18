@@ -10,6 +10,7 @@ using Core.Services;
 using Data.Models;
 using AvaloniaEdit.Document;
 using AvaloniaEdit.Highlighting;
+using Desktop.Helpers;
 
 namespace Desktop.ViewModels;
 
@@ -56,6 +57,12 @@ public partial class RequestTabViewModel : ViewModelBase
     
     [ObservableProperty]
     private IHighlightingDefinition? _bodySyntaxHighlighting;
+    
+    [ObservableProperty]
+    private string _jsonError = "";
+    
+    [ObservableProperty]
+    private bool _hasJsonError = false;
 
     [ObservableProperty]
     private string _preRequestScript = "";
@@ -134,6 +141,9 @@ public partial class RequestTabViewModel : ViewModelBase
     {
         _executor = executor;
         InitializeMockData();
+        
+        // Validate JSON whenever body text changes
+        BodyDocument.TextChanged += (s, e) => ValidateJson();
     }
 
     [RelayCommand]
@@ -301,8 +311,19 @@ public partial class RequestTabViewModel : ViewModelBase
                 // Just set the full response - TextEditor handles large text efficiently!
                 ResponseDocument.Text = formattedBody;
                 
-                // Don't use syntax highlighting for response - keep it plain for better readability
-                ResponseSyntaxHighlighting = null;
+                // Set syntax highlighting with BRIGHT, readable colors
+                if (response.BodyType?.Contains("json") == true)
+                {
+                    ResponseSyntaxHighlighting = JsonHighlightingHelper.GetJsonHighlighting();
+                }
+                else if (response.BodyType?.Contains("xml") == true)
+                {
+                    ResponseSyntaxHighlighting = JsonHighlightingHelper.GetXmlHighlighting();
+                }
+                else
+                {
+                    ResponseSyntaxHighlighting = null;
+                }
                 
                 OnPropertyChanged(nameof(ResponseStatusColor));
                 OnPropertyChanged(nameof(ResponseStatusTextColor));
@@ -435,16 +456,39 @@ public partial class RequestTabViewModel : ViewModelBase
     {
         UpdateContentTypeHeader();
         UpdateBodySyntaxHighlighting();
+        ValidateJson();
     }
     
     private void UpdateBodySyntaxHighlighting()
     {
         BodySyntaxHighlighting = BodyType switch
         {
-            "JSON" => HighlightingManager.Instance.GetDefinition("JavaScript"), // JSON uses JS highlighting
-            "XML" => HighlightingManager.Instance.GetDefinition("XML"),
+            "JSON" => JsonHighlightingHelper.GetJsonHighlighting(),
+            "XML" => JsonHighlightingHelper.GetXmlHighlighting(),
             _ => null
         };
+    }
+    
+    private void ValidateJson()
+    {
+        if (BodyType != "JSON" || string.IsNullOrWhiteSpace(BodyDocument.Text))
+        {
+            HasJsonError = false;
+            JsonError = "";
+            return;
+        }
+        
+        try
+        {
+            JsonDocument.Parse(BodyDocument.Text);
+            HasJsonError = false;
+            JsonError = "";
+        }
+        catch (JsonException ex)
+        {
+            HasJsonError = true;
+            JsonError = $"JSON Error: {ex.Message}";
+        }
     }
 
     private void InitializeMockData()
