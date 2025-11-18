@@ -500,7 +500,13 @@ public partial class RequestTabViewModel : ViewModelBase
         
         try
         {
-            JsonDocument.Parse(BodyDocument.Text);
+            // Ignore standard variables for JSON validation by temporarily replacing them
+            var textToValidate = System.Text.RegularExpressions.Regex.Replace(
+                BodyDocument.Text, 
+                @"\{\$[^{}]+\}|\{![^{}]+\}", 
+                "\"TEMPORARY_VARIABLE_PLACEHOLDER\"");
+
+            JsonDocument.Parse(textToValidate);
             HasJsonError = false;
             JsonError = "";
         }

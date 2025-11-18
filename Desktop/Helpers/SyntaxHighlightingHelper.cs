@@ -286,4 +286,20 @@ public static class SyntaxHighlightingHelper
         using var reader = new XmlTextReader(new System.IO.StringReader(xshd));
         return HighlightingLoader.Load(reader, HighlightingManager.Instance);
     }
+
+    public static IHighlightingDefinition GetVariableOnlyHighlighting()
+    {
+        var xshd = $@"<?xml version=""1.0""?>
+<SyntaxDefinition name=""Variables"" xmlns=""http://icsharpcode.net/sharpdevelop/syntaxdefinition/2008"">
+    <Color name=""Variable"" foreground=""{VariableColor}"" fontWeight=""bold"" />
+    <RuleSet>
+        <Rule color=""Variable"">
+            {VariablePattern}
+        </Rule>
+    </RuleSet>
+</SyntaxDefinition>";
+        
+        using var reader = new XmlTextReader(new System.IO.StringReader(xshd));
+        return HighlightingLoader.Load(reader, HighlightingManager.Instance);
+    }
 }

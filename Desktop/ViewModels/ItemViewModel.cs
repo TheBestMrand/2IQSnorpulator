@@ -61,10 +61,21 @@ public partial class HeaderViewModel : ViewModelBase
     private string _value = "";
     
     [ObservableProperty]
+    private TextDocument _keyDocument = new();
+
+    [ObservableProperty]
     private TextDocument _valueDocument = new();
 
     [ObservableProperty]
-    private IHighlightingDefinition _valueHighlighting = SyntaxHighlightingHelper.GetVariableOnlyHighlighting();
+    private IHighlightingDefinition _variableSyntaxHighlighting = SyntaxHighlightingHelper.GetVariableOnlyHighlighting();
+
+    partial void OnKeyChanged(string value)
+    {
+        if (KeyDocument.Text != value)
+        {
+            KeyDocument.Text = value;
+        }
+    }
 
     partial void OnValueChanged(string value)
     {
@@ -76,6 +87,14 @@ public partial class HeaderViewModel : ViewModelBase
     
     public HeaderViewModel()
     {
+        KeyDocument.TextChanged += (s, e) =>
+        {
+            if (Key != KeyDocument.Text)
+            {
+                Key = KeyDocument.Text;
+            }
+        };
+
         ValueDocument.TextChanged += (s, e) =>
         {
             if (Value != ValueDocument.Text)
@@ -95,10 +114,21 @@ public partial class QueryParamViewModel : ViewModelBase
     private string _value = "";
     
     [ObservableProperty]
+    private TextDocument _keyDocument = new();
+
+    [ObservableProperty]
     private TextDocument _valueDocument = new();
     
     [ObservableProperty]
-    private IHighlightingDefinition _valueHighlighting = SyntaxHighlightingHelper.GetVariableOnlyHighlighting();
+    private IHighlightingDefinition _variableSyntaxHighlighting = SyntaxHighlightingHelper.GetVariableOnlyHighlighting();
+
+    partial void OnKeyChanged(string value)
+    {
+        if (KeyDocument.Text != value)
+        {
+            KeyDocument.Text = value;
+        }
+    }
 
     partial void OnValueChanged(string value)
     {
@@ -110,6 +140,14 @@ public partial class QueryParamViewModel : ViewModelBase
     
     public QueryParamViewModel()
     {
+        KeyDocument.TextChanged += (s, e) =>
+        {
+            if (Key != KeyDocument.Text)
+            {
+                Key = KeyDocument.Text;
+            }
+        };
+
         ValueDocument.TextChanged += (s, e) =>
         {
             if (Value != ValueDocument.Text)
