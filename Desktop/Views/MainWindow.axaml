@@ -967,6 +967,9 @@
                                         <TextBlock Text="Pre-Request Script" FontSize="13" Foreground="#888" 
                                                    HorizontalAlignment="Left" VerticalAlignment="Center"/>
                                         <StackPanel Orientation="Horizontal" Spacing="8" HorizontalAlignment="Right">
+                                            <Button Content="📘 Snippets" Classes="header-btn"
+                                                    Command="{Binding ToggleSnippetsPanelCommand}"
+                                                    ToolTip.Tip="Show code snippets"/>
                                             <Button Content="Variables Guide" Classes="header-btn"
                                                     Command="{Binding ToggleVariablesGuideCommand}"/>
                                             <ComboBox SelectedItem="{Binding ScriptLanguage}" Classes="dark-combo" 

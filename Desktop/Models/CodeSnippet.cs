@@ -67,6 +67,78 @@ ctx.Request.Body = System.Text.Json.JsonSerializer.Serialize(json);
 
 // Set body from variable
 ctx.Request.Body = ctx.GetVariable(""requestBody"");"
+        },
+        new CodeSnippet
+        {
+            Title = "Generate Timestamp",
+            Description = "Create Unix timestamp or ISO format",
+            Language = "C#",
+            Code = @"// Unix timestamp (seconds)
+var unixTimestamp = ((DateTimeOffset)DateTime.UtcNow).ToUnixTimeSeconds();
+ctx.SetVariable(""timestamp"", unixTimestamp.ToString());
+
+// ISO 8601 format
+var isoTime = DateTime.UtcNow.ToString(""yyyy-MM-ddTHH:mm:ssZ"");
+ctx.SetVariable(""isoTime"", isoTime);"
+        },
+        new CodeSnippet
+        {
+            Title = "Generate HMAC Signature",
+            Description = "Create HMAC signature for authentication",
+            Language = "C#",
+            Code = @"using System.Security.Cryptography;
+using System.Text;
+
+var secret = ctx.GetVariable(""apiSecret"");
+var message = ctx.Request.Url + ctx.Request.Body;
+var key = Encoding.UTF8.GetBytes(secret);
+var hmac = new HMACSHA256(key);
+var hash = hmac.ComputeHash(Encoding.UTF8.GetBytes(message));
+var signature = Convert.ToBase64String(hash);
+ctx.Request.Headers[""X-Signature""] = signature;"
+        },
+        new CodeSnippet
+        {
+            Title = "Conditional Logic",
+            Description = "Execute code based on conditions",
+            Language = "C#",
+            Code = @"// Check environment variable
+var env = ctx.GetVariable(""environment"");
+if (env == ""production"")
+{
+    ctx.Request.Url = ctx.GetVariable(""prodUrl"");
+}
+else
+{
+    ctx.Request.Url = ctx.GetVariable(""devUrl"");
+}
+
+// Conditional header
+if (ctx.Request.Method == ""POST"")
+{
+    ctx.Request.Headers[""Content-Type""] = ""application/json"";
+}"
+        },
+        new CodeSnippet
+        {
+            Title = "Generate Random Data",
+            Description = "Create random strings, numbers, and UUIDs",
+            Language = "C#",
+            Code = @"using System.Linq;
+
+// Random string
+var random = new Random();
+var chars = ""ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"";
+var randomString = new string(Enumerable.Range(0, 10)
+    .Select(_ => chars[random.Next(chars.Length)]).ToArray());
+ctx.SetVariable(""randomString"", randomString);
+
+// Random number
+var randomNum = random.Next(1000, 9999);
+ctx.SetVariable(""randomNumber"", randomNum.ToString());
+
+// UUID
+ctx.SetVariable(""uuid"", Guid.NewGuid().ToString());"
         }
     };
 
@@ -165,6 +237,96 @@ ctx.Request.Url = f""{base_url}/users/{user_id}""
 # Add query parameter
 ctx.Request.Query[""page""] = ""1""
 ctx.Request.Query[""limit""] = ""10"""
+        },
+        new CodeSnippet
+        {
+            Title = "Generate Timestamp",
+            Description = "Create Unix timestamp or ISO format",
+            Language = "Python",
+            Code = @"import time
+from datetime import datetime
+
+# Unix timestamp (seconds)
+timestamp = int(time.time())
+ctx.SetVariable(""timestamp"", str(timestamp))
+
+# ISO 8601 format
+iso_time = datetime.utcnow().strftime(""%Y-%m-%dT%H:%M:%SZ"")
+ctx.SetVariable(""isoTime"", iso_time)"
+        },
+        new CodeSnippet
+        {
+            Title = "Generate HMAC Signature",
+            Description = "Create HMAC signature for authentication",
+            Language = "Python",
+            Code = @"import hmac
+import hashlib
+import base64
+
+secret = ctx.GetVariable(""apiSecret"")
+message = ctx.Request.Url + ctx.Request.Body
+signature = hmac.new(
+    secret.encode('utf-8'),
+    message.encode('utf-8'),
+    hashlib.sha256
+).digest()
+signature_b64 = base64.b64encode(signature).decode('utf-8')
+ctx.Request.Headers[""X-Signature""] = signature_b64"
+        },
+        new CodeSnippet
+        {
+            Title = "Conditional Logic",
+            Description = "Execute code based on conditions",
+            Language = "Python",
+            Code = @"# Check environment variable
+env = ctx.GetVariable(""environment"")
+if env == ""production"":
+    ctx.Request.Url = ctx.GetVariable(""prodUrl"")
+else:
+    ctx.Request.Url = ctx.GetVariable(""devUrl"")
+
+# Conditional header
+if ctx.Request.Method == ""POST"":
+    ctx.Request.Headers[""Content-Type""] = ""application/json"""
+        },
+        new CodeSnippet
+        {
+            Title = "Generate Random Data",
+            Description = "Create random strings, numbers, and UUIDs",
+            Language = "Python",
+            Code = @"import random
+import string
+import uuid
+
+# Random string
+random_string = ''.join(random.choices(
+    string.ascii_uppercase + string.digits, k=10
+))
+ctx.SetVariable(""randomString"", random_string)
+
+# Random number
+random_num = random.randint(1000, 9999)
+ctx.SetVariable(""randomNumber"", str(random_num))
+
+# UUID
+ctx.SetVariable(""uuid"", str(uuid.uuid4()))"
+        },
+        new CodeSnippet
+        {
+            Title = "Modify JSON Body",
+            Description = "Parse and modify JSON request body",
+            Language = "Python",
+            Code = @"import json
+
+# Parse JSON body
+if ctx.Request.Body:
+    data = json.loads(ctx.Request.Body)
+    data[""timestamp""] = ctx.GetVariable(""timestamp"")
+    data[""id""] = ctx.GetVariable(""randomId"")
+    ctx.Request.Body = json.dumps(data)
+
+# Set body from variable
+ctx.Request.Body = ctx.GetVariable(""requestBody"")"
         }
     };
 
