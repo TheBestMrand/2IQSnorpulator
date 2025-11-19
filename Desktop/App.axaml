@@ -13,6 +13,7 @@
         <converters:TabVisibilityConverter x:Key="TabVisibilityConverter"/>
         <converters:SendButtonTextConverter x:Key="SendButtonTextConverter"/>
         <converters:BodyTypeVisibilityConverter x:Key="BodyTypeVisibilityConverter"/>
+        <converters:ExpandIconConverter x:Key="ExpandIconConverter"/>
     </Application.Resources>
 
     <Application.Styles>

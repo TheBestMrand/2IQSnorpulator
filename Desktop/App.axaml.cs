@@ -57,6 +57,7 @@ public partial class App : Application
         services.AddSingleton<StandardVariablesProvider>();
         services.AddSingleton<VariableResolver>();
         services.AddSingleton<GreatRequestExecutor>();
+        services.AddSingleton<CollectionService>();
         services.AddSingleton<MainWindowViewModel>();
     }
 

@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project>
+  <PropertyGroup>
+    <!-- Enable AOT Analysis -->
+    <PublishAot>false</PublishAot>
+    <!-- Enable trimming for smaller app size -->
+    <PublishTrimmed>true</PublishTrimmed>
+    <TrimMode>link</TrimMode>
+    <!-- Use ReadyToRun for faster startup -->
+    <PublishReadyToRun>true</PublishReadyToRun>
+    <!-- Tiered compilation for better startup -->
+    <TieredCompilation>true</TieredCompilation>
+    <TieredCompilationQuickJit>true</TieredCompilationQuickJit>
+  </PropertyGroup>
+</Project>
+

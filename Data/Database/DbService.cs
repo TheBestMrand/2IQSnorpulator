@@ -7,13 +7,20 @@ namespace Data.Database;
 
 public class DbService : IDisposable
 {
-    private readonly LiteDatabase _db;
+    private readonly Lazy<LiteDatabase> _db;
     
-    public ILiteCollection<Collection> Collections => _db.GetCollection<Collection>(DbConsts.TableNameCollections);
-    public ILiteCollection<Request> Requests => _db.GetCollection<Request>(DbConsts.TableNameRequests);
-    public ILiteCollection<Environment> Environments => _db.GetCollection<Environment>(DbConsts.TableNameEnvironments);
-    public ILiteCollection<HistoryEntry> History => _db.GetCollection<HistoryEntry>(DbConsts.TableNameHistoryEntries);
-    public ILiteCollection<Session> Session => _db.GetCollection<Session>(DbConsts.TableSessionEntries);
+    // Lazy collection properties for better performance
+    private ILiteCollection<Collection>? _collections;
+    private ILiteCollection<Request>? _requests;
+    private ILiteCollection<Environment>? _environments;
+    private ILiteCollection<HistoryEntry>? _history;
+    private ILiteCollection<Session>? _session;
+    
+    public ILiteCollection<Collection> Collections => _collections ??= GetCollection<Collection>(DbConsts.TableNameCollections);
+    public ILiteCollection<Request> Requests => _requests ??= GetCollection<Request>(DbConsts.TableNameRequests);
+    public ILiteCollection<Environment> Environments => _environments ??= GetCollection<Environment>(DbConsts.TableNameEnvironments);
+    public ILiteCollection<HistoryEntry> History => _history ??= GetCollection<HistoryEntry>(DbConsts.TableNameHistoryEntries);
+    public ILiteCollection<Session> Session => _session ??= GetCollection<Session>(DbConsts.TableSessionEntries);
     
     private string GetDbPath()
     {
@@ -25,26 +32,37 @@ public class DbService : IDisposable
 
     public DbService()
     {
-        _db = new LiteDatabase(GetDbPath());
-        
-        SetupIndexes();
+        // Lazy initialization for faster startup
+        _db = new Lazy<LiteDatabase>(() =>
+        {
+            var connection = new LiteDatabase(GetDbPath());
+            SetupIndexes(connection);
+            return connection;
+        }, LazyThreadSafetyMode.ExecutionAndPublication);
     }
     
-    private ILiteCollection<T> GetCollection<T>(string name) => _db.GetCollection<T>(name);
-    
-    private void SetupIndexes()
+    private ILiteCollection<T> GetCollection<T>(string name)
     {
-        GetCollection<Request>(DbConsts.TableNameRequests).EnsureIndex(x => x.CollectionId);
-        GetCollection<HistoryEntry>(DbConsts.TableNameHistoryEntries).EnsureIndex(x => x.ExecutedAt);
-        GetCollection<HistoryEntry>(DbConsts.TableNameHistoryEntries).EnsureIndex(x => x.Name);
-        GetCollection<Collection>(DbConsts.TableNameCollections).EnsureIndex(x => x.Name, true);
-        GetCollection<Environment>(DbConsts.TableNameEnvironments).EnsureIndex(x => x.Name, true);
-        GetCollection<Session>(DbConsts.TableSessionEntries).EnsureIndex(x => x.Name, true);
+        return _db.Value.GetCollection<T>(name);
+    }
+    
+    private void SetupIndexes(LiteDatabase db)
+    {
+        // Setup indexes on collections - pass db directly to avoid circular dependency
+        db.GetCollection<Request>(DbConsts.TableNameRequests).EnsureIndex(x => x.CollectionId);
+        db.GetCollection<HistoryEntry>(DbConsts.TableNameHistoryEntries).EnsureIndex(x => x.ExecutedAt);
+        db.GetCollection<HistoryEntry>(DbConsts.TableNameHistoryEntries).EnsureIndex(x => x.Name);
+        db.GetCollection<Collection>(DbConsts.TableNameCollections).EnsureIndex(x => x.Name, true);
+        db.GetCollection<Environment>(DbConsts.TableNameEnvironments).EnsureIndex(x => x.Name, true);
+        db.GetCollection<Session>(DbConsts.TableSessionEntries).EnsureIndex(x => x.Name, true);
     }
 
     public void Dispose()
     {
-        _db.Dispose();
+        if (_db.IsValueCreated)
+        {
+            _db.Value.Dispose();
+        }
         GC.SuppressFinalize(this);
     }
 }

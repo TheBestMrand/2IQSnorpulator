@@ -1,4 +1,6 @@
-﻿using AvaloniaEdit.Document;
+﻿using System;
+using System.Collections.ObjectModel;
+using AvaloniaEdit.Document;
 using AvaloniaEdit.Highlighting;
 using Desktop.Helpers;
 using CommunityToolkit.Mvvm.ComponentModel;
@@ -8,14 +10,26 @@ namespace Desktop.ViewModels;
 public partial class CollectionItemViewModel : ViewModelBase
 {
     [ObservableProperty]
+    private int _id;
+
+    [ObservableProperty]
     private string _name = "";
 
     [ObservableProperty]
     private int _requestCount;
+
+    [ObservableProperty]
+    private bool _isExpanded;
+
+    [ObservableProperty]
+    private ObservableCollection<RequestItemViewModel> _requests = new();
 }
 
-public partial class HistoryItemViewModel : ViewModelBase
+public partial class RequestItemViewModel : ViewModelBase
 {
+    [ObservableProperty]
+    private int _id;
+
     [ObservableProperty]
     private string _name = "";
 
@@ -23,7 +37,7 @@ public partial class HistoryItemViewModel : ViewModelBase
     private string _method = "GET";
 
     [ObservableProperty]
-    private string _url = "";
+    private int _collectionId;
 
     public string MethodColor => Method switch
     {
@@ -44,6 +58,63 @@ public partial class HistoryItemViewModel : ViewModelBase
         "PATCH" => "#c084fc",
         _ => "#888888"
     };
+
+    partial void OnMethodChanged(string value)
+    {
+        OnPropertyChanged(nameof(MethodColor));
+        OnPropertyChanged(nameof(MethodTextColor));
+    }
+}
+
+public partial class HistoryItemViewModel : ViewModelBase
+{
+    [ObservableProperty]
+    private int _id;
+
+    [ObservableProperty]
+    private string _name = "";
+
+    [ObservableProperty]
+    private string _method = "GET";
+
+    [ObservableProperty]
+    private string _url = "";
+
+    [ObservableProperty]
+    private DateTime _executedAt;
+
+    public string MethodColor => Method switch
+    {
+        "GET" => "#1a4d2e",
+        "POST" => "#4d3a1a",
+        "PUT" => "#1a3a4d",
+        "DELETE" => "#4d1a1a",
+        "PATCH" => "#4d1a4d",
+        _ => "#2a2a2a"
+    };
+
+    public string MethodTextColor => Method switch
+    {
+        "GET" => "#4ade80",
+        "POST" => "#fbbf24",
+        "PUT" => "#60a5fa",
+        "DELETE" => "#f87171",
+        "PATCH" => "#c084fc",
+        _ => "#888888"
+    };
+
+    public string TimeAgo
+    {
+        get
+        {
+            var span = DateTime.UtcNow - ExecutedAt;
+            if (span.TotalMinutes < 1) return "Just now";
+            if (span.TotalMinutes < 60) return $"{(int)span.TotalMinutes}m ago";
+            if (span.TotalHours < 24) return $"{(int)span.TotalHours}h ago";
+            if (span.TotalDays < 7) return $"{(int)span.TotalDays}d ago";
+            return ExecutedAt.ToLocalTime().ToString("MMM dd");
+        }
+    }
 
     partial void OnMethodChanged(string value)
     {
@@ -85,6 +156,8 @@ public partial class HeaderViewModel : ViewModelBase
         }
     }
     
+    public event EventHandler? KeyChanged;
+
     public HeaderViewModel()
     {
         KeyDocument.TextChanged += (s, e) =>
@@ -92,6 +165,7 @@ public partial class HeaderViewModel : ViewModelBase
             if (Key != KeyDocument.Text)
             {
                 Key = KeyDocument.Text;
+                KeyChanged?.Invoke(this, EventArgs.Empty);
             }
         };
 
@@ -138,6 +212,9 @@ public partial class QueryParamViewModel : ViewModelBase
         }
     }
     
+    public event EventHandler? KeyChanged;
+    public event EventHandler? ValueChanged;
+
     public QueryParamViewModel()
     {
         KeyDocument.TextChanged += (s, e) =>
@@ -145,6 +222,7 @@ public partial class QueryParamViewModel : ViewModelBase
             if (Key != KeyDocument.Text)
             {
                 Key = KeyDocument.Text;
+                KeyChanged?.Invoke(this, EventArgs.Empty);
             }
         };
 
@@ -153,6 +231,7 @@ public partial class QueryParamViewModel : ViewModelBase
             if (Value != ValueDocument.Text)
             {
                 Value = ValueDocument.Text;
+                ValueChanged?.Invoke(this, EventArgs.Empty);
             }
         };
     }

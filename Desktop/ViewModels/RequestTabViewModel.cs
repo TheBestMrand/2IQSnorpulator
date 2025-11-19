@@ -11,12 +11,19 @@ using Data.Models;
 using AvaloniaEdit.Document;
 using AvaloniaEdit.Highlighting;
 using Desktop.Helpers;
+using Desktop.Models;
 
 namespace Desktop.ViewModels;
 
 public partial class RequestTabViewModel : ViewModelBase
 {
     private readonly GreatRequestExecutor _executor;
+
+    [ObservableProperty]
+    private int? _requestId;
+
+    [ObservableProperty]
+    private int? _collectionId;
 
     [ObservableProperty]
     private string _name = "New Request";
@@ -35,6 +42,9 @@ public partial class RequestTabViewModel : ViewModelBase
 
     [ObservableProperty]
     private bool _isActive;
+
+    [ObservableProperty]
+    private bool _isSaved = false;
 
     [ObservableProperty]
     private string _selectedOptionTab = "Headers";
@@ -79,6 +89,9 @@ public partial class RequestTabViewModel : ViewModelBase
 
     [ObservableProperty]
     private bool _isVariablesGuideOpen;
+
+    [ObservableProperty]
+    private bool _isSnippetsPanelOpen;
 
     public List<string> StandardVariables => StandardVariablesProvider.SupportedVariables.ToList();
 
@@ -157,11 +170,35 @@ public partial class RequestTabViewModel : ViewModelBase
         // Validate JSON whenever body text changes
         BodyDocument.TextChanged += (s, e) => ValidateJson();
     }
+    
+    public void OnQueryParamUpdated()
+    {
+        // Get base URL without query params
+        var urlParts = Url.Split('?');
+        var baseUrl = urlParts[0];
+        
+        // Get non-empty query params
+        var activeParams = QueryParams
+            .Where(q => !string.IsNullOrWhiteSpace(q.Key))
+            .Select(q => $"{Uri.EscapeDataString(q.Key)}={Uri.EscapeDataString(q.Value)}")
+            .ToList();
+        
+        // Rebuild URL with query params
+        if (activeParams.Any())
+        {
+            Url = $"{baseUrl}?{string.Join("&", activeParams)}";
+        }
+        else if (Url.Contains("?"))
+        {
+            Url = baseUrl;
+        }
+    }
 
     [RelayCommand]
     private void SelectOptionTab(string tab)
     {
         SelectedOptionTab = tab;
+        OnPropertyChanged(nameof(CurrentSnippets));
     }
 
     [RelayCommand]
@@ -173,11 +210,13 @@ public partial class RequestTabViewModel : ViewModelBase
     [RelayCommand]
     private void AddHeader()
     {
-        Headers.Add(new HeaderViewModel
+        var header = new HeaderViewModel
         {
             Key = "",
             Value = ""
-        });
+        };
+        header.KeyChanged += (s, e) => OnHeaderKeyChanged(header);
+        Headers.Add(header);
     }
 
     [RelayCommand]
@@ -186,26 +225,88 @@ public partial class RequestTabViewModel : ViewModelBase
         Headers.Remove(header);
     }
 
+    // Auto-add new header row when last row is filled
+    public void OnHeaderKeyChanged(HeaderViewModel header)
+    {
+        if (Headers.Count > 0 && Headers.Last() == header && !string.IsNullOrWhiteSpace(header.Key))
+        {
+            AddHeader();
+        }
+    }
+
     [RelayCommand]
     private void AddQueryParam()
     {
-        QueryParams.Add(new QueryParamViewModel
+        var param = new QueryParamViewModel
         {
             Key = "",
             Value = ""
-        });
+        };
+        param.KeyChanged += (s, e) => OnQueryParamKeyChanged(param);
+        param.ValueChanged += (s, e) => OnQueryParamUpdated();
+        QueryParams.Add(param);
     }
 
     [RelayCommand]
     private void RemoveQueryParam(QueryParamViewModel param)
     {
         QueryParams.Remove(param);
+        OnQueryParamUpdated();
+    }
+
+    // Auto-add new query param row when last row is filled
+    public void OnQueryParamKeyChanged(QueryParamViewModel param)
+    {
+        if (QueryParams.Count > 0 && QueryParams.Last() == param && !string.IsNullOrWhiteSpace(param.Key))
+        {
+            AddQueryParam();
+        }
+        OnQueryParamUpdated();
     }
 
     [RelayCommand]
     private void ToggleVariablesGuide()
     {
         IsVariablesGuideOpen = !IsVariablesGuideOpen;
+        if (IsVariablesGuideOpen)
+            IsSnippetsPanelOpen = false;
+    }
+
+    [RelayCommand]
+    private void ToggleSnippetsPanel()
+    {
+        IsSnippetsPanelOpen = !IsSnippetsPanelOpen;
+        if (IsSnippetsPanelOpen)
+            IsVariablesGuideOpen = false;
+    }
+
+    [RelayCommand]
+    private void InsertSnippet(CodeSnippet snippet)
+    {
+        if (SelectedOptionTab == "PreScript")
+        {
+            ScriptDocument.Text += "\n" + snippet.Code;
+        }
+        else if (SelectedOptionTab == "PostScript")
+        {
+            PostScriptDocument.Text += "\n" + snippet.Code;
+        }
+    }
+
+    public List<CodeSnippet> CurrentSnippets
+    {
+        get
+        {
+            if (SelectedOptionTab == "PreScript")
+            {
+                return ScriptLanguage == "C#" ? CodeSnippets.CSharpPreRequestSnippets : CodeSnippets.PythonPreRequestSnippets;
+            }
+            else if (SelectedOptionTab == "PostScript")
+            {
+                return ScriptLanguage == "C#" ? CodeSnippets.CSharpPostRequestSnippets : CodeSnippets.PythonPostRequestSnippets;
+            }
+            return new List<CodeSnippet>();
+        }
     }
 
     [RelayCommand]
@@ -233,6 +334,9 @@ public partial class RequestTabViewModel : ViewModelBase
         }
 
         IsSending = true;
+        
+        // Apply authentication headers before sending
+        ApplyAuthHeaders();
         
         // Capture values to avoid cross-thread access
         var methodToUse = ActualMethod;
@@ -409,7 +513,7 @@ public partial class RequestTabViewModel : ViewModelBase
         }
     }
 
-    private string GetContentType()
+    public string GetContentType()
     {
         return BodyType switch
         {
@@ -519,36 +623,88 @@ public partial class RequestTabViewModel : ViewModelBase
 
     private void InitializeMockData()
     {
-        Headers.Add(new HeaderViewModel
-        {
-            Key = "Content-Type",
-            Value = "application/json"
-        });
-        Headers.Add(new HeaderViewModel
+        // Start with just empty rows
+        var emptyHeader = new HeaderViewModel
         {
             Key = "",
             Value = ""
-        });
+        };
+        emptyHeader.KeyChanged += (s, e) => OnHeaderKeyChanged(emptyHeader);
+        Headers.Add(emptyHeader);
 
-        QueryParams.Add(new QueryParamViewModel
+        var emptyParam = new QueryParamViewModel
         {
             Key = "",
             Value = ""
-        });
+        };
+        emptyParam.KeyChanged += (s, e) => OnQueryParamKeyChanged(emptyParam);
+        emptyParam.ValueChanged += (s, e) => OnQueryParamUpdated();
+        QueryParams.Add(emptyParam);
 
-        ScriptDocument.Text = "";  // Empty by default
-        PostScriptDocument.Text = "";  // Empty by default
-
-        Url = "https://api.github.com/users/octocat";
+        ScriptDocument.Text = "";
+        PostScriptDocument.Text = "";
+        Url = "";
         
         // Initialize syntax highlighting for JSON and Scripts
         UpdateBodySyntaxHighlighting();
         UpdateScriptSyntaxHighlighting();
     }
 
+    private void ApplyAuthHeaders()
+    {
+        // Remove existing Authorization header if present
+        var existingAuthHeader = Headers.FirstOrDefault(h => h.Key.Equals("Authorization", StringComparison.OrdinalIgnoreCase));
+        if (existingAuthHeader != null)
+        {
+            Headers.Remove(existingAuthHeader);
+        }
+
+        // Add new Authorization header based on auth type
+        string? authValue = null;
+        
+        switch (AuthType)
+        {
+            case "Bearer Token":
+                if (!string.IsNullOrWhiteSpace(AuthToken))
+                {
+                    authValue = $"Bearer {AuthToken}";
+                }
+                break;
+            
+            case "Basic Auth":
+                if (!string.IsNullOrWhiteSpace(AuthUsername))
+                {
+                    var credentials = $"{AuthUsername}:{AuthPassword}";
+                    var bytes = System.Text.Encoding.UTF8.GetBytes(credentials);
+                    var base64 = Convert.ToBase64String(bytes);
+                    authValue = $"Basic {base64}";
+                }
+                break;
+            
+            case "API Key":
+                if (!string.IsNullOrWhiteSpace(AuthToken))
+                {
+                    authValue = AuthToken;
+                }
+                break;
+        }
+
+        if (authValue != null)
+        {
+            var authHeader = new HeaderViewModel
+            {
+                Key = "Authorization",
+                Value = authValue
+            };
+            authHeader.KeyChanged += (s, e) => OnHeaderKeyChanged(authHeader);
+            Headers.Insert(0, authHeader); // Insert at top
+        }
+    }
+
     partial void OnScriptLanguageChanged(string value)
     {
         UpdateScriptSyntaxHighlighting();
+        OnPropertyChanged(nameof(CurrentSnippets));
     }
 
     private void UpdateScriptSyntaxHighlighting()
@@ -559,5 +715,91 @@ public partial class RequestTabViewModel : ViewModelBase
             "Python" => SyntaxHighlightingHelper.GetPythonHighlighting(),
             _ => null
         };
+    }
+
+    /// <summary>
+    /// Load request data from database model into the tab
+    /// </summary>
+    public void LoadFromRequest(Request request)
+    {
+        RequestId = request.Id;
+        CollectionId = request.CollectionId;
+        Name = request.Name;
+        Method = request.Method;
+        Url = request.Url;
+        BodyType = string.IsNullOrEmpty(request.BodyType) ? "None" : 
+                   request.BodyType.Contains("json") ? "JSON" :
+                   request.BodyType.Contains("xml") ? "XML" :
+                   request.BodyType.Contains("form") ? "Form Data" : "Raw";
+        
+        if (!string.IsNullOrEmpty(request.Body))
+        {
+            BodyDocument.Text = request.Body;
+        }
+
+        // Load headers
+        Headers.Clear();
+        foreach (var header in request.Headers)
+        {
+            var h = new HeaderViewModel
+            {
+                Key = header.Key,
+                Value = header.Value
+            };
+            h.KeyChanged += (s, e) => OnHeaderKeyChanged(h);
+            Headers.Add(h);
+        }
+        var emptyH = new HeaderViewModel();
+        emptyH.KeyChanged += (s, e) => OnHeaderKeyChanged(emptyH);
+        Headers.Add(emptyH); // Add empty row
+
+        // Load query params
+        QueryParams.Clear();
+        foreach (var param in request.Query)
+        {
+            var p = new QueryParamViewModel
+            {
+                Key = param.Key,
+                Value = param.Value
+            };
+            p.KeyChanged += (s, e) => OnQueryParamKeyChanged(p);
+            p.ValueChanged += (s, e) => OnQueryParamUpdated();
+            QueryParams.Add(p);
+        }
+        var emptyP = new QueryParamViewModel();
+        emptyP.KeyChanged += (s, e) => OnQueryParamKeyChanged(emptyP);
+        emptyP.ValueChanged += (s, e) => OnQueryParamUpdated();
+        QueryParams.Add(emptyP); // Add empty row
+
+        // Load scripts
+        if (!string.IsNullOrEmpty(request.PreRequestScript))
+        {
+            ScriptDocument.Text = request.PreRequestScript;
+        }
+        
+        if (!string.IsNullOrEmpty(request.PostResponseScript))
+        {
+            PostScriptDocument.Text = request.PostResponseScript;
+        }
+
+        if (request.ScriptLanguage.HasValue)
+        {
+            ScriptLanguage = request.ScriptLanguage.Value == Data.Models.Enums.Languages.Csharp ? "C#" : "Python";
+        }
+
+        IsSaved = true;
+    }
+
+    /// <summary>
+    /// Load request data from history entry into the tab
+    /// </summary>
+    public void LoadFromHistory(HistoryEntry historyEntry)
+    {
+        LoadFromRequest(historyEntry.Request);
+        
+        // Clear CollectionId and RequestId so it can be saved as a new request
+        CollectionId = null;
+        RequestId = null;
+        IsSaved = false;
     }
 }
